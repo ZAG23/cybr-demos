@@ -4,7 +4,7 @@ set -euo pipefail
 # 1. Use existing CYBR_DEMOS_PATH or default to /opt/cybr-demos
 export CYBR_DEMOS_PATH="${CYBR_DEMOS_PATH:-/opt/cybr-demos}"
 
-settings_dir="$CYBR_DEMOS_PATH/.cybr-demos"
+settings_dir="$CYBR_DEMOS_PATH/settings"
 log_file="$settings_dir/init_log"
 
 # Check if already initialized
@@ -14,7 +14,7 @@ if [ -d "$settings_dir" ]; then
 fi
 
 mkdir "$settings_dir"
-chmod 700 "$settings_dir"
+chmod 777 "$settings_dir"
 touch "$log_file"
 
 # Simple logging function

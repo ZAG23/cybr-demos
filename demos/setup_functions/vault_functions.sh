@@ -255,3 +255,13 @@ add_app_certificate_attr_auth() {
     }"
 }
 
+# $1 isp_subdomain, $2 identity_token
+add_ip_to_privilege_cloud_allowList(){
+  ip=$(curl --silent "https://checkip.amazonaws.com/")
+  ip_cidr="${ip}/32"
+  ip_list="[\"${ip_cidr}\"]"
+  update_ip_allowlist "$1" "$2" "$ip_list"
+  printf "\nWaiting 10 minutes for Privilege Cloud Allow List update to complete...\n"
+  sleep 600
+}
+

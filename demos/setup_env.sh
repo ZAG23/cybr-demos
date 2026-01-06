@@ -4,7 +4,7 @@
 # -a means that every bash variable would become an environment variable
 # Using ‘+’ rather than ‘-’ causes the option to be turned off
 set -a
-source "$CYBR_DEMOS_PATH/demos/tenant_env.sh"
+source "$CYBR_DEMOS_PATH/demos/tenant_vars.sh"
 source "$CYBR_DEMOS_PATH/demos/setup_functions/identity_functions.sh"
 source "$CYBR_DEMOS_PATH/demos/setup_functions/conjur_functions.sh"
 source "$CYBR_DEMOS_PATH/demos/setup_functions/vault_functions.sh"

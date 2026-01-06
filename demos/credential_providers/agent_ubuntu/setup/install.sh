@@ -3,7 +3,6 @@ set -euo pipefail
 
 main() {
   set_variables
-  add_ip_to_privledge_cloud_allowList
   install_package
   setup_safe
   setup_app_id
@@ -17,7 +16,7 @@ set_variables() {
   # -a means that every bash variable would become an environment variable
   # Using ‘+’ rather than ‘-’ causes the option to be turned off
   set -a
-  source "$CYBR_DEMOS_PATH/demos/setup_vars.env.sh"
+  source "$CYBR_DEMOS_PATH/demos/setup_env.sh"
   source "$demo_path/setup/vars.env"
   set +a
 
@@ -33,19 +32,13 @@ set_variables() {
   safe_name="$SAFE_NAME"
 
   install_directory_base="/home/ubuntu/cybr-demos-install/credential-provider"
-}
 
-add_ip_to_privilege_cloud_allowList(){
-  ip=$(curl --silent "https://checkip.amazonaws.com/")
-  ip_cidr="${ip}/32"
-  ip_list="[\"${ip_cidr}\"]"
-  identity_token=$(get_identity_token "$isp_id" "$client_id" "$client_secret")
-  update_ip_allowlist "$tenant_subdomain" "$identity_token" "$ip_list"
-  printf "\nWaiting 10 minutes for Privilege Cloud Allow List update to complete...\n"
-  sleep 600
+
 }
 
 install_package() {
+
+
   mkdir -p $install_directory_base
   pushd $install_directory_base || exit
 
@@ -79,9 +72,12 @@ install_package() {
                 | sed -e "s#\#CreateVaultEnvironment=yes#CreateVaultEnvironment=yes#g" > $aimparms
   cp -f $aimparms /var/tmp/aimparms
 
+  add_ip_to_privilege_cloud_allowList "$tenant_subdomain" "$identity_token"
+
   sudo dpkg -i $cark_package
   popd || exit
-}
+
+}}
 
 setup_safe() {
   identity_token=$(get_identity_token "$tenant_id" "$client_id" "$client_secret")
