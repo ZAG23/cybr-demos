@@ -8,12 +8,12 @@ get_identity_token() {
       return 1
   fi
 
-  curl --silent --location "https://$1.id.cyberark.cloud/oauth2/platformtoken" \
+access_token=$(curl --silent --location "https://$1.id.cyberark.cloud/oauth2/platformtoken" \
   --header 'X-IDAP-NATIVE-CLIENT: true' \
   --header 'Content-Type: application/x-www-form-urlencoded' \
   --data-urlencode 'grant_type=client_credentials' \
   --data-urlencode "client_id=$2" \
-  --data-urlencode "client_secret=$3" | jq -r .access_token
+  --data-urlencode "client_secret=$3" | jq -r .access_token)
 
   # Check if access_token is empty or null
   if [ -z "$access_token" ] || [ "$access_token" == "null" ]; then
@@ -21,5 +21,7 @@ get_identity_token() {
     exit 1
   fi
 
+  #Return the token to the caller via stdout
+  printf '%s' "$access_token"
 }
 
