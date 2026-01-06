@@ -153,21 +153,7 @@ set -euo pipefail
 
  }
 
- # Can take 10 mins to be applied, no additional updates can happen will being applied
- update_ip_allowlist() {
-   # $1 isp_subdomain, $2 identity_token, $3 json_array_of_ips ('["1.0.0.4/32","2.0.0.5/24"]')
-   printf "\nUpdating Privilege Cloud IP Allowlist: $3\n"
-   ipListJson="$3"
-
-   curl --silent \
-     --request PUT \
-     --location "https://$1.privilegecloud.cyberark.cloud/api/advanced-settings/ip-allowlist" \
-     --header "Authorization: Bearer $2" \
-     --header "Content-Type: application/json" \
-     --data "{ \"customerPublicIPs\": $ipListJson }"
- }
-
-create_app() {
+ create_app() {
   # $1 isp_subdomain, $2 identity_token, $3 app_id
 
   if [ $# -ne 3 ]; then
@@ -254,6 +240,20 @@ add_app_certificate_attr_auth() {
       }
     }"
 }
+
+# Can take 10 mins to be applied, no additional updates can happen will being applied
+ update_ip_allowlist() {
+   # $1 isp_subdomain, $2 identity_token, $3 json_array_of_ips ('["1.0.0.4/32","2.0.0.5/24"]')
+   printf "\nUpdating Privilege Cloud IP Allowlist: $3\n"
+   ipListJson="$3"
+
+   curl --silent \
+     --request PUT \
+     --location "https://$1.privilegecloud.cyberark.cloud/api/advanced-settings/ip-allowlist" \
+     --header "Authorization: Bearer $2" \
+     --header "Content-Type: application/json" \
+     --data "{ \"customerPublicIPs\": $ipListJson }"
+ }
 
 # $1 isp_subdomain, $2 identity_token
 add_ip_to_privilege_cloud_allowList(){

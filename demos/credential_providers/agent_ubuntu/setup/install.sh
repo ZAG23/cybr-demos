@@ -25,6 +25,9 @@ set_variables() {
   client_id=$CLIENT_ID
   client_secret=$CLIENT_SECRET
 
+  installer_id=$INSTALLER_USR
+  installer_secret=$INSTALLER_PWD
+
   asset_s3_uri="$ASSET_S3_URI"
   zip_file="$ZIP_FILE"
   cark_package="$CARK_PACKAGE"
@@ -46,15 +49,13 @@ install_package() {
   vault_ini="$install_directory_base/Vault.ini"
   aimparms="$install_directory_base/aimparms"
 
-  pas_username="$CLIENT_ID"
-  pas_password="$CLIENT_SECRET"
   vault_address="vault-$TENANT_SUBDOMAIN.privilegecloud.cyberark.cloud"
 
   unzip -o $zip_file
 
 # create_cred_file
   chmod 700 ./CreateCredFile
-  ./CreateCredFile $cred_file Password -Username "$pas_username" -Password "$pas_password" -Hostname -EntropyFile
+  ./CreateCredFile $cred_file Password -Username "$installer_id" -Password "$installer_secret" -Hostname -EntropyFile
 
 # setup_vault_ini
   mv Vault.ini Vault.ini.orig
