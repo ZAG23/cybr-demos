@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-source "$CYBR_DEMOS_PATH/demo_utility.sh"
+source "$CYBR_DEMOS_PATH/demos/utility/ubuntu/demo_utility.sh"
 
 echo
 echo
@@ -43,4 +43,3 @@ echo
 
 # shellcheck disable=SC2059
 printf -- "/opt/CARKaim/bin/appprvmgr ShowParms \n"
-/opt/CARKaim/bin/appprvmgr ShowParms

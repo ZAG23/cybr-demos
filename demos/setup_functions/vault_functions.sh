@@ -255,13 +255,44 @@ add_app_certificate_attr_auth() {
      --data "{ \"customerPublicIPs\": $ipListJson }"
  }
 
-# $1 isp_subdomain, $2 identity_token
+
 add_ip_to_privilege_cloud_allowList(){
+  # $1 isp_subdomain, $2 identity_token
+  local subdomain=$1
+  local token=$2
+
   ip=$(curl --silent "https://checkip.amazonaws.com/")
   ip_cidr="${ip}/32"
   ip_list="[\"${ip_cidr}\"]"
-  update_ip_allowlist "$1" "$2" "$ip_list"
-  printf "\nWaiting 10 minutes for Privilege Cloud Allow List update to complete...\n"
-  sleep 600
+
+  if ! check_ip_allowed "$subdomain" "$token" "$ip"; then
+    update_ip_allowlist "$subdomain" "$token" "$ip_list"
+    printf "\nWaiting 10 minutes for Privilege Cloud Allow List update to complete...\n"
+    sleep 600
+  fi
+}
+
+check_ip_allowed() {
+  # $1 isp_subdomain, $2 identity_token, $3 ip_to_check ("1.2.3.4/32")
+  local subdomain=$1
+  local token=$2
+  local target_ip=$3
+
+  # Fetch the current allowlist
+  response=$(curl --silent \
+    --request GET \
+    --location "https://$subdomain.privilegecloud.cyberark.cloud/api/advanced-settings/ip-allowlist" \
+    --header "Authorization: Bearer $token" \
+    --header "Accept: application/json")
+
+  # Use jq to check if the target_ip exists in the customerPublicIPs array
+  # The -e flag sets the exit status based on the result
+  if echo "$response" | jq -e ".customerPublicIPs | contains([\"$target_ip\"])" > /dev/null; then
+    printf "Result: $target_ip is already allowed.\n"
+    return 0
+  else
+    printf "Result: $target_ip is NOT in the allowlist.\n"
+    return 1
+  fi
 }
 

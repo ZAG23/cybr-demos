@@ -57,11 +57,9 @@ install_package() {
   chmod 700 ./CreateCredFile
   ./CreateCredFile $cred_file Password -Username "$installer_id" -Password "$installer_secret" -Hostname -EntropyFile
 
-# setup_vault_ini
-  mv Vault.ini Vault.ini.orig
-  # shellcheck disable=SC2002
-  cat Vault.ini.orig | sed "s/ADDRESS=.*/ADDRESS=$vault_address/" > $vault_ini
-  cat Vault.ini.orig | sed "s/VaultName=.*/VaultName=CAMainVault/" > $vault_ini
+  cp Vault.ini Vault.ini.orig
+  sed -i "s/ADDRESS=.*/ADDRESS=$vault_address/" Vault.ini
+  sed -i "s/VaultName=.*/VaultName=CAMainVault/" Vault.ini
 
   # shellcheck disable=SC2002
   cat aimparms.sample \
@@ -91,6 +89,13 @@ setup_safe() {
   # shellcheck disable=SC2005
   # shellcheck disable=SC2046
   prov_id=$(echo $(sudo grep 'Provider \[Prov_ip' /var/opt/CARKaim/logs/APPConsole.log) | nawk -F "[][]" -v var="2" '{print $(var*2)}' -)
+
+  # Check if prov_id is null or empty
+  if [ -z "${prov_id:-}" ]; then
+      printf "\nERROR: Provisioning ID (prov_id) is missing or empty. Cannot proceed.\n" >&2
+      exit 1
+  fi
+
   echo "Adding Provider $prov_id to safe $safe_name"
   add_safe_read_member "$tenant_subdomain" "$identity_token" "$safe_name" "$prov_id"
 
@@ -113,7 +118,7 @@ setup_app_id() {
   echo "Adding hash authn for appID $cp_app_id: $appHash"
   add_app_authentication "$tenant_subdomain" "$identity_token" "$cp_app_id" "Hash" "$appHash"
 
-  echo "Adding AppId $cp_app_id to safe $cp_safe"
+  echo "Adding AppId $cp_app_id to safe $safe_name"
   add_safe_read_member "$tenant_subdomain" "$identity_token" "$safe_name" "$cp_app_id"
 
 }
