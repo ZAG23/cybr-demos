@@ -70,6 +70,7 @@ install_package() {
                 | sed -e "s#\#CreateVaultEnvironment=yes#CreateVaultEnvironment=yes#g" > $aimparms
   cp -f $aimparms /var/tmp/aimparms
 
+  identity_token=$(get_identity_token "$tenant_id" "$client_id" "$client_secret")
   add_ip_to_privilege_cloud_allowList "$tenant_subdomain" "$identity_token"
 
   sudo dpkg -i $cark_package
@@ -91,6 +92,7 @@ setup_safe() {
   prov_id=$(echo $(sudo grep 'Provider \[Prov_ip' /var/opt/CARKaim/logs/APPConsole.log) | nawk -F "[][]" -v var="2" '{print $(var*2)}' -)
   echo "Adding Provider $prov_id to safe $safe_name"
   add_safe_read_member "$tenant_subdomain" "$identity_token" "$safe_name" "$prov_id"
+
 }
 
 setup_app_id() {
@@ -112,6 +114,7 @@ setup_app_id() {
 
   echo "Adding AppId $cp_app_id to safe $cp_safe"
   add_safe_read_member "$tenant_subdomain" "$identity_token" "$safe_name" "$cp_app_id"
+
 }
 
 main "$@"
