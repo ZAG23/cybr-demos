@@ -14,4 +14,12 @@ get_identity_token() {
   --data-urlencode 'grant_type=client_credentials' \
   --data-urlencode "client_id=$2" \
   --data-urlencode "client_secret=$3" | jq -r .access_token
+
+  # Check if access_token is empty or null
+  if [ -z "$access_token" ] || [ "$access_token" == "null" ]; then
+    printf "\nERROR: Get Identity Token failed. Access token is empty or null.\n" >&2
+    exit 1
+  fi
+
 }
+
