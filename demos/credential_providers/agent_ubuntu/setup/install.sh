@@ -33,11 +33,9 @@ set_variables() {
 
   install_directory_base="/home/ubuntu/cybr-demos-install/credential-provider"
 
-
 }
 
 install_package() {
-
 
   mkdir -p $install_directory_base
   pushd $install_directory_base || exit
@@ -77,7 +75,7 @@ install_package() {
   sudo dpkg -i $cark_package
   popd || exit
 
-}}
+}
 
 setup_safe() {
   identity_token=$(get_identity_token "$tenant_id" "$client_id" "$client_secret")
