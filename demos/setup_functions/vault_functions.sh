@@ -276,13 +276,7 @@ add_ip_to_privilege_cloud_allowList(){
   else
     ip_cidr="${ip}/32"
 
-    updated_ips=$(
-      jq -c \
-        --arg ip "$ip_cidr" '
-          .customerPublicIPs += [$ip]
-          | .customerPublicIPs
-        ' "$response"
-    )
+    updated_ips=$(echo "$response" | jq -c --arg ip "$ip_cidr" '.customerPublicIPs += [$ip] | .customerPublicIPs')
 
     printf "Adding: $ip_cidr to the allowlist.\n"
     update_ip_allowlist "$subdomain" "$token" "$updated_ips"

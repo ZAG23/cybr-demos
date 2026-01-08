@@ -25,6 +25,39 @@ access_token=$(curl --silent --location "https://$1.id.cyberark.cloud/oauth2/pla
   printf '%s' "$access_token"
 }
 
+get_uuid_by_userid() {
+  # $1 isp_id, $2 identity_token, $3 username
+    if [ $# -ne 3 ]; then
+      echo "Usage: get_user_uuid_by_name isp_id identity_token username"
+      return 1
+    fi
+
+    response=$(curl --silent --location --request POST \
+      "https://$1.id.cyberark.cloud/CDirectoryService/GetUserByName" \
+      --header "authorization: Bearer $2" \
+      --header "content-type: application/json" \
+      --data "$(jq -cn --arg u "$3" '{username:$u}')"
+    )
+
+    # Check if response is empty or null
+    if [ -z "$response" ] || [ "$response" == "null" ]; then
+      printf "\nERROR: GetUserByName failed. Response is empty or null.\n" >&2
+      exit 1
+    fi
+
+    # Extract UUID (handle common field names)
+    user_uuid=$(printf '%s' "$response" | jq -r '.Uuid // empty' 2>/dev/null)
+
+    # Validate UUID
+    if [ -z "$user_uuid" ] || [ "$user_uuid" == "null" ]; then
+      printf "\nERROR: GetUserByName failed. UUID not found.\nResponse: %s\n" "$response" >&2
+      exit 1
+    fi
+
+    # Return UUID to caller via stdout
+    printf '%s' "$user_uuid"
+}
+
 set_user_lock_state() {
   # $1 isp_id, $2 identity_token, $3 user_id, $4 lock_flag (true|false)
   if [ $# -ne 4 ]; then
@@ -46,7 +79,9 @@ set_user_lock_state() {
     --data '{}'
   )
 
-  local user_uuid="abc-e2e-123"
+  # Get Installer users ID, then Un-"Disable" account
+  local user_uuid=$(get_uuid_by_userid  $isp_id $identity_token $user_id)
+
   curl --request POST \
     --location "https://${isp_id}.id.cyberark.cloud/CDirectoryService/ChangeUserState" \
     --header 'Accept: */*' \
