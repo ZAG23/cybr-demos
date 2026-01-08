@@ -72,6 +72,9 @@ install_package() {
   identity_token=$(get_identity_token "$tenant_id" "$client_id" "$client_secret")
   add_ip_to_privilege_cloud_allowList "$tenant_subdomain" "$identity_token"
 
+  set_user_lock_state "$tenant_id" "$identity_token" "$installer_id" "false"
+
+  echo Installing agent package
   sudo dpkg -i $cark_package
   popd || exit
 
@@ -103,6 +106,7 @@ setup_safe() {
 
 setup_app_id() {
   create_app "$tenant_subdomain" "$identity_token" "$cp_app_id"
+
   # Add the OS user
   add_app_authentication "$tenant_subdomain" "$identity_token" "$cp_app_id" "OSUser" "$(whoami)"
 

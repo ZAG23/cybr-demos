@@ -272,7 +272,7 @@ add_ip_to_privilege_cloud_allowList(){
   # Use jq to check if the target_ip exists in the customerPublicIPs array
   # The -e flag sets the exit status based on the result
   if echo "$response" | jq -e ".customerPublicIPs | contains([\"$ip\"])" > /dev/null; then
-    printf "Result: $target_ip is already allowed.\n"
+    printf "Result: $ip is already allowed.\n"
   else
     ip_cidr="${ip}/32"
 
