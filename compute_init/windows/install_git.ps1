@@ -1,4 +1,4 @@
-Write-Host "Install Git"
+Write-Host "# Installing Git"
 
 # Chocolatey installation bootstrap
 Set-ExecutionPolicy Bypass -Scope Process -Force

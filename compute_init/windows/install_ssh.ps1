@@ -1,4 +1,4 @@
-Write-Host "Install SSH"
+Write-Host "# Installing SSH"
 
 Get-WindowsCapability -Online | Where-Object Name -like 'OpenSSH*'
 Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0

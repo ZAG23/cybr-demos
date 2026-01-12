@@ -1,4 +1,4 @@
-Write-Host "Install IIS"
+Write-Host "# Installing IIS"
 
 Install-WindowsFeature -name Web-Server -IncludeManagementTools
 

@@ -5,12 +5,11 @@ Start-Transcript -Append C:\init_log.txt
 Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Force
 #--------------------------------------------------------------------------------------------------
 
-& ".\install_nuget.ps1"
+#& ".\install_nuget.ps1"
 & ".\install_git.ps1"
 & ".\install_ps7.ps1"
 & ".\install_notepad++.ps1"
-& ".\install_git.ps1"
-& ".\install_ssh.ps1"
+#& ".\install_ssh.ps1"
 & ".\install_aws_tools.ps1"
 & ".\install_chrome.ps1"
 & ".\install_iis.ps1"
@@ -23,7 +22,7 @@ Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Force
 $ScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 Import-Module "$ScriptRoot\module_pin_to_taskbar.psm1" -Force
 
-Write-Host "Setup Pins for Apps on Taskbar"
+Write-Host "# Setting up Pins for Apps on Taskbar"
 [PinToTaskBar_Verb] $pin = [PinToTaskBar_Verb]::new();
 
 $pin.Pin("C:\Windows\notepad.exe")

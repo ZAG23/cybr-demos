@@ -1,4 +1,4 @@
-Write-Host "Install PowerShell 7.4"
+Write-Host "# Installing PowerShell 7.4"
 
 # Download and install PowerShell 7.4
 Invoke-WebRequest -Uri https://github.com/PowerShell/PowerShell/releases/download/v7.4.0/PowerShell-7.4.0-win-x64.msi -OutFile $env:TEMP\PowerShell-7.4.0-win-x64.msi
