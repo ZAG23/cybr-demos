@@ -1,3 +1,5 @@
+Write-Host "Install Git"
+
 # Chocolatey installation bootstrap
 Set-ExecutionPolicy Bypass -Scope Process -Force
 iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))

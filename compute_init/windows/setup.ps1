@@ -20,8 +20,10 @@ Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Force
 
 #--------------------------------------------------------------------------------------------------
 
-using module "C:\Cyberark\cybrlab\PinToTaskbar.psm1"
+$ScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+Import-Module "$ScriptRoot\module_pin_to_taskbar.psm1" -Force
 
+Write-Host "Setup Pins for Apps on Taskbar"
 [PinToTaskBar_Verb] $pin = [PinToTaskBar_Verb]::new();
 
 $pin.Pin("C:\Windows\notepad.exe")
@@ -38,5 +40,5 @@ $pin.Pin("C:\Windows\system32\taskschd.msc")
 New-Item -Path "C:\init_completed.txt" -ItemType File | Out-Null
 #--------------------------------------------------------------------------------------------------
 Stop-Transcript
-#Restart-Computer -ComputerName localhost -Force
+Restart-Computer -ComputerName localhost -Force
 #--------------------------------------------------------------------------------------------------

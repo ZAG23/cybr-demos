@@ -1,3 +1,4 @@
+Write-Host "Install AWSPowerShell"
 # Windows PowerShell (5.1) – from PSGallery
 # -Force → suppresses “trust repository” & overwrite prompts
 # -AllowClobber → avoids conflicts with other AWS modules
