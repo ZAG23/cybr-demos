@@ -8,7 +8,7 @@ $CYBR_DEMOS_PATH = "$HOME\cybr-demos"
 #demo_path
 . "$CYBR_DEMOS_PATH\demos\utility\powershell5\dotenv_functions.ps1"
 . "$CYBR_DEMOS_PATH\demos\utility\powershell5\aws_functions.ps1"
-Load-DotEnv "$CYBR_DEMOS_PATH\demos\setup_vars.env"
+. "$CYBR_DEMOS_PATH\demos\tenant_vars.ps1"
 
 # Local setup
 Load-DotEnv "vars.env"
