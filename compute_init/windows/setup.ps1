@@ -8,7 +8,8 @@ Start-Transcript -Append C:\init_log.txt
 Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
 
 #--------------------------------------------------------------------------------------------------
-#& "$ScriptRoot\install_nuget.ps1"
+& "$ScriptRoot\install_nuget.ps1"
+& "$ScriptRoot\install_chocolatey.ps1"
 & "$ScriptRoot\install_git.ps1"
 & "$ScriptRoot\install_ps7.ps1"
 & "$ScriptRoot\install_notepad++.ps1"

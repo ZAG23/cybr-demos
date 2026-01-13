@@ -42,12 +42,3 @@ $proc = Start-Process `
     -PassThru
 
 Start-Sleep -Seconds 2
-
-# ------------------------------
-# Verify
-# ------------------------------
-if (Test-Path $chromeExe) {
-    & $chromeExe --version
-} else {
-    Write-Warning "Chrome installation completed but chrome.exe not found yet."
-}

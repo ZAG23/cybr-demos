@@ -31,11 +31,6 @@ if ($psGallery -and $psGallery.InstallationPolicy -ne 'Trusted') {
 }
 
 # ------------------------------
-# NuGet provider prereq (no prompts)
-# ------------------------------
-Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force | Out-Null
-
-# ------------------------------
 # Install AWSPowerShell (Windows PowerShell 5.1)
 # ------------------------------
 Install-Module -Name AWSPowerShell -Scope CurrentUser -Force -AllowClobber -Confirm:$false
@@ -43,7 +38,7 @@ Install-Module -Name AWSPowerShell -Scope CurrentUser -Force -AllowClobber -Conf
 # ------------------------------
 # Verify
 # ------------------------------
-Get-Module -ListAvailable -Name AWSPowerShell
+#Get-Module -ListAvailable -Name AWSPowerShell
 
 ## To connect to AWS
 #$ak = "ACCESS_KEY"
