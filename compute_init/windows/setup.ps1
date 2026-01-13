@@ -4,7 +4,7 @@ $ScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 #--------------------------------------------------------------------------------------------------
 New-Item -Path "C:\bootstrap\setup_started.txt" -ItemType File -Force | Out-Null
 #--------------------------------------------------------------------------------------------------
-Start-Transcript -Append C:\init_log.txt
+Start-Transcript -Append C:\bootstrap\setup_log.txt
 Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
 
 #--------------------------------------------------------------------------------------------------
