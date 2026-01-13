@@ -3,25 +3,20 @@ Write-Host "# Installing Notepad++ (if not already installed)"
 $ErrorActionPreference = 'Stop'
 $ConfirmPreference     = 'None'
 
-# ------------------------------
-# Detect existing Notepad++ (PATH + both common install locations)
-# ------------------------------
-$cmd = Get-Command "notepad++.exe" -ErrorAction SilentlyContinue
-if ($cmd) {
-    Write-Host "Notepad++ already installed (PATH): $($cmd.Source)"
-    & $cmd.Source -version
-    return
-}
-
+# Prefer x86 path (your case), but also check x64 just in case
 $pathsToCheck = @(
-    "$env:ProgramFiles\Notepad++\notepad++.exe",
-    "${env:ProgramFiles(x86)}\Notepad++\notepad++.exe"
+    "${env:ProgramFiles(x86)}\Notepad++\notepad++.exe",
+    "$env:ProgramFiles\Notepad++\notepad++.exe"
 ) | Where-Object { $_ -and $_.Trim() -ne "" }
 
 $exePath = $pathsToCheck | Where-Object { Test-Path $_ } | Select-Object -First 1
+
+# ------------------------------
+# Check if Notepad++ already exists
+# ------------------------------
 if ($exePath) {
-    Write-Host "Notepad++ already installed: $exePath"
-    & $exePath -version
+    $ver = (Get-Item $exePath).VersionInfo.ProductVersion
+    Write-Host "Notepad++ already installed: $exePath ($ver)"
     return
 }
 
@@ -42,14 +37,24 @@ Invoke-WebRequest `
     -OutFile $installer
 
 # ------------------------------
-# Install (no prompts)
+# Install (no prompts, do not launch)
 # ------------------------------
 Write-Host "Installing Notepad++..."
 Start-Process `
     -FilePath $installer `
     -ArgumentList "/S" `
     -NoNewWindow `
-    -Wait `
-    -PassThru | Out-Null
+    -Wait | Out-Null
 
 Start-Sleep -Seconds 2
+
+# ------------------------------
+# Verify (without launching Notepad++)
+# ------------------------------
+$exePath = $pathsToCheck | Where-Object { Test-Path $_ } | Select-Object -First 1
+if ($exePath) {
+    $ver = (Get-Item $exePath).VersionInfo.ProductVersion
+    Write-Host "Notepad++ installed: $exePath ($ver)"
+} else {
+    Write-Warning "Notepad++ install completed but not found in expected locations."
+}
