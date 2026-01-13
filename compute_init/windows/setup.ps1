@@ -2,7 +2,7 @@ Write-Host "# Running Setup"
 
 $ScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 #--------------------------------------------------------------------------------------------------
-New-Item -Path "C:\bootstrap\setup_started.txt" -ItemType File -Force | Out-Null
+New-Item -Path "C:\bootstrap\setup_started" -ItemType File -Force | Out-Null
 #--------------------------------------------------------------------------------------------------
 Start-Transcript -Append C:\bootstrap\setup_log.txt
 Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
@@ -34,7 +34,7 @@ Pin-ToTaskbar "C:\Windows\system32\compmgmt.msc"
 Pin-ToTaskbar "C:\Windows\system32\services.msc"
 Pin-ToTaskbar "C:\Windows\system32\taskschd.msc"
 #--------------------------------------------------------------------------------------------------
-New-Item -Path "C:\bootstrap\setup_completed.txt" -ItemType File -Force | Out-Null
+New-Item -Path "C:\bootstrap\setup_completed" -ItemType File -Force | Out-Null
 #--------------------------------------------------------------------------------------------------
 Stop-Transcript
 #Restart-Computer -ComputerName localhost -Force
