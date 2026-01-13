@@ -3,14 +3,20 @@ Write-Host "# Installing Chrome (if not already installed)"
 $ErrorActionPreference = 'Stop'
 $ConfirmPreference     = 'None'
 
-$chromeExe = "$env:ProgramFiles\Google\Chrome\Application\chrome.exe"
+# Common Chrome install locations (machine-wide)
+$pathsToCheck = @(
+    "$env:ProgramFiles\Google\Chrome\Application\chrome.exe",
+    "${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe"
+) | Where-Object { $_ -and $_.Trim() -ne "" }
+
+$chromeExe = $pathsToCheck | Where-Object { Test-Path $_ } | Select-Object -First 1
 
 # ------------------------------
-# Check if Chrome already exists
+# Check if Chrome already exists (NO launching)
 # ------------------------------
-if (Test-Path $chromeExe) {
-    Write-Host "Chrome already installed:"
-    & $chromeExe --version
+if ($chromeExe) {
+    $ver = (Get-Item $chromeExe).VersionInfo.ProductVersion
+    Write-Host "Chrome already installed: $chromeExe ($ver)"
     return
 }
 
@@ -31,14 +37,24 @@ Invoke-WebRequest `
     -OutFile $installer
 
 # ------------------------------
-# Install Chrome (no prompts)
+# Install Chrome (no prompts, no launch)
 # ------------------------------
 Write-Host "Installing Chrome..."
-$proc = Start-Process `
+Start-Process `
     -FilePath $installer `
     -ArgumentList "/silent /install" `
     -NoNewWindow `
-    -Wait `
-    -PassThru
+    -Wait | Out-Null
 
 Start-Sleep -Seconds 2
+
+# ------------------------------
+# Verify (file-based, no launch)
+# ------------------------------
+$chromeExe = $pathsToCheck | Where-Object { Test-Path $_ } | Select-Object -First 1
+if ($chromeExe) {
+    $ver = (Get-Item $chromeExe).VersionInfo.ProductVersion
+    Write-Host "Chrome installed: $chromeExe ($ver)"
+} else {
+    Write-Warning "Chrome installation completed but chrome.exe not found."
+}
