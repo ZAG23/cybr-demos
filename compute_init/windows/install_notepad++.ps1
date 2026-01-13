@@ -3,13 +3,24 @@ Write-Host "# Installing Notepad++ (if not already installed)"
 $ErrorActionPreference = 'Stop'
 $ConfirmPreference     = 'None'
 
-$exePath = "$env:ProgramFiles\Notepad++\notepad++.exe"
+# ------------------------------
+# Detect existing Notepad++ (PATH + both common install locations)
+# ------------------------------
+$cmd = Get-Command "notepad++.exe" -ErrorAction SilentlyContinue
+if ($cmd) {
+    Write-Host "Notepad++ already installed (PATH): $($cmd.Source)"
+    & $cmd.Source -version
+    return
+}
 
-# ------------------------------
-# Check if Notepad++ already exists
-# ------------------------------
-if (Test-Path $exePath) {
-    Write-Host "Notepad++ already installed:"
+$pathsToCheck = @(
+    "$env:ProgramFiles\Notepad++\notepad++.exe",
+    "${env:ProgramFiles(x86)}\Notepad++\notepad++.exe"
+) | Where-Object { $_ -and $_.Trim() -ne "" }
+
+$exePath = $pathsToCheck | Where-Object { Test-Path $_ } | Select-Object -First 1
+if ($exePath) {
+    Write-Host "Notepad++ already installed: $exePath"
     & $exePath -version
     return
 }
@@ -39,15 +50,16 @@ Start-Process `
     -ArgumentList "/S" `
     -NoNewWindow `
     -Wait `
-    -PassThru
+    -PassThru | Out-Null
 
 Start-Sleep -Seconds 2
 
 # ------------------------------
-# Verify
+# Verify (check both locations again)
 # ------------------------------
-if (Test-Path $exePath) {
+$exePath = $pathsToCheck | Where-Object { Test-Path $_ } | Select-Object -First 1
+if ($exePath) {
     & $exePath -version
 } else {
-    Write-Warning "Notepad++ installation completed but executable not found."
+    Write-Warning "Notepad++ installation completed but executable not found in Program Files locations."
 }
