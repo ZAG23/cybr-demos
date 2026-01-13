@@ -53,13 +53,3 @@ Start-Process `
     -PassThru | Out-Null
 
 Start-Sleep -Seconds 2
-
-# ------------------------------
-# Verify (check both locations again)
-# ------------------------------
-$exePath = $pathsToCheck | Where-Object { Test-Path $_ } | Select-Object -First 1
-if ($exePath) {
-    & $exePath -version
-} else {
-    Write-Warning "Notepad++ installation completed but executable not found in Program Files locations."
-}

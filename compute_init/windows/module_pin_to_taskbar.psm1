@@ -25,23 +25,30 @@ class PinToTaskBar_Verb {
         $wanted = $this.NormalizeTarget($target)
 
         $shell = New-Object -ComObject WScript.Shell
+        try {
+            foreach ($lnk in Get-ChildItem -Path $taskbarPins -Filter *.lnk -ErrorAction SilentlyContinue) {
+                try {
+                    $sc = $shell.CreateShortcut($lnk.FullName)
 
-        foreach ($lnk in Get-ChildItem -Path $taskbarPins -Filter *.lnk -ErrorAction SilentlyContinue) {
-            try {
-                $sc = $shell.CreateShortcut($lnk.FullName)
-                $lnkTarget = ($sc.TargetPath ?? "").ToString().ToLowerInvariant()
+                    $lnkTarget = ""
+                    if ($sc.TargetPath) { $lnkTarget = $sc.TargetPath.ToString().ToLowerInvariant() }
 
-                # Some pins (msc) can come through as mmc.exe with arguments; check both.
-                $args = ($sc.Arguments ?? "").ToString().ToLowerInvariant()
+                    $args = ""
+                    if ($sc.Arguments) { $args = $sc.Arguments.ToString().ToLowerInvariant() }
 
-                if ($lnkTarget -eq $wanted) { return $true }
-                if ($args -and $args -like "*$wanted*") { return $true }
-            } catch {
-                # ignore bad shortcuts
+                    if ($lnkTarget -eq $wanted) { return $true }
+                    if ($args -and $args -like "*$wanted*") { return $true }
+                } catch {
+                    # ignore bad shortcuts
+                }
             }
+            return $false
         }
-        return $false
+        finally {
+            [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($shell)
+        }
     }
+
 
     [void] InvokePinVerb([string]$target) {
         Write-Host "Pinning $target to taskbar"
