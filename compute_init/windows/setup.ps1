@@ -5,7 +5,8 @@ $ScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 New-Item -Path "C:\init_started.txt" -ItemType File -Force | Out-Null
 #--------------------------------------------------------------------------------------------------
 Start-Transcript -Append C:\init_log.txt
-Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Force
+Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
+
 #--------------------------------------------------------------------------------------------------
 #& "$ScriptRoot\install_nuget.ps1"
 & "$ScriptRoot\install_git.ps1"
