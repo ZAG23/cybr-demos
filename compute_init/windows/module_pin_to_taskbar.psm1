@@ -67,3 +67,12 @@ class PinToTaskBar_Verb
         return $true
     }
 }
+
+function Pin-ToTaskbar {
+    param([Parameter(Mandatory)] [string]$Target)
+
+    $pin = [PinToTaskBar_Verb]::new()
+    $pin.Pin($Target) | Out-Null
+}
+
+Export-ModuleMember -Function Pin-ToTaskbar

@@ -22,17 +22,15 @@ Import-Module "$ScriptRoot\module_pin_to_taskbar.psm1" -Force
 
 Write-Host "# Setting up Pins for Apps on Taskbar"
 
-[PinToTaskBar_Verb] $pin = [PinToTaskBar_Verb]::new();
-
-$pin.Pin("C:\Windows\notepad.exe")
-$pin.Pin("C:\Windows\explorer.exe")
-$pin.Pin("C:\Program Files (x86)\Notepad++\notepad++.exe")
-$pin.Pin("C:\Program Files\Google\Chrome\Application\Chrome.exe")
-$pin.Pin("C:\Windows\system32\WindowsPowerShell\v1.0\PowerShell.exe")
-$pin.Pin("C:\Windows\System32\inetsrv\InetMgr.exe")
-$pin.Pin("C:\Windows\system32\compmgmt.msc")
-$pin.Pin("C:\Windows\system32\services.msc")
-$pin.Pin("C:\Windows\system32\taskschd.msc")
+Pin-ToTaskbar "C:\Windows\notepad.exe"
+Pin-ToTaskbar "C:\Windows\explorer.exe"
+Pin-ToTaskbar "C:\Program Files (x86)\Notepad++\notepad++.exe"
+Pin-ToTaskbar "C:\Program Files\Google\Chrome\Application\Chrome.exe"
+Pin-ToTaskbar "C:\Windows\system32\WindowsPowerShell\v1.0\PowerShell.exe"
+Pin-ToTaskbar "C:\Windows\System32\inetsrv\InetMgr.exe"
+Pin-ToTaskbar "C:\Windows\system32\compmgmt.msc"
+Pin-ToTaskbar "C:\Windows\system32\services.msc"
+Pin-ToTaskbar "C:\Windows\system32\taskschd.msc"
 #--------------------------------------------------------------------------------------------------
 New-Item -Path "C:\init_completed.txt" -ItemType File | Out-Null
 #--------------------------------------------------------------------------------------------------
