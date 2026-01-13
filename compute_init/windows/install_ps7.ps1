@@ -10,7 +10,8 @@ $pwshExe = "$env:ProgramFiles\PowerShell\7\pwsh.exe"
 # Check if PowerShell 7 is already installed
 # ------------------------------
 if (Test-Path $pwshExe) {
-    $currentVersion = & $pwshExe -NoLogo -Command '$PSVersionTable.PSVersion'
+    $currentVersion = [Version](& $pwshExe -NoLogo -Command '$PSVersionTable.PSVersion.ToString()')
+
     if ($currentVersion -ge $requiredVersion) {
         Write-Host "PowerShell already installed: $currentVersion"
         return
