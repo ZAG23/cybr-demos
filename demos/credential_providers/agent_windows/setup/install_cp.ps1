@@ -67,7 +67,7 @@ Set-Content $silent_file $content -Encoding ASCII
 
 Start-Sleep -Seconds 1
 
-# Set and persist env var: AIM_TEMP_FOLDER (drop-in replacement)
+# Set and persist env var: AIM_TEMP_FOLDER
 $aimTemp = "C:\Program Files\CyberArk\ApplicationPasswordProvider\Temp"
 New-Item -ItemType Directory -Path $aimTemp -Force | Out-Null
 # Current session (so anything you run next in this script sees it)
@@ -75,8 +75,8 @@ $env:AIM_TEMP_FOLDER = $aimTemp
 # Persist for services + future processes (machine scope)
 [Environment]::SetEnvironmentVariable("AIM_TEMP_FOLDER", $aimTemp, "Machine")
 
-$log_file = Join-Path $installerDir "cp_installshield_log.txt"
-& ".\setup.exe" "/s" "/f1$silent_file" "$env:INSTALLER_USR;$env:INSTALLER_PWD" "/f2$log_file"
+# dafault log file location is the same folder as the .iss file, setup.log
+& ".\setup.exe" "/s" "/f1$silent_file" "$env:INSTALLER_USR;$env:INSTALLER_PWD"
 
 Start-Sleep -Seconds 2
 
