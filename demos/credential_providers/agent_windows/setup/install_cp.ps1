@@ -20,7 +20,7 @@ if (-not $s3_uri_vc_redist)   { throw "S3_URI_VC_REDIST is empty after Load-DotE
 if (-not $s3_uri_cp_installer)   { throw "S3_URI_CP_INSTALLER is empty after Load-DotEnv" }
 if (-not $zip_file) { throw "ZIP_FILE is empty after Load-DotEnv" }
 
-$vault_fqdn = "vault-$TENANT_SUBDOMAIN.privilegecloud.cyberark.cloud"
+$vault_fqdn = "vault-$env:TENANT_SUBDOMAIN.privilegecloud.cyberark.cloud"
 
 # Get file from S3
 $region = $env:AWS_REGION
@@ -68,19 +68,15 @@ Set-Content $silent_file $content -Encoding ASCII
 Start-Sleep -Seconds 1
 
 # Set and persist env var: AIM_TEMP_FOLDER (drop-in replacement)
-$aimTemp = "C:\ProgramData\CyberArk\AAM\Temp"
-
+$aimTemp = "C:\Program Files\CyberArk\ApplicationPasswordProvider\Temp"
 New-Item -ItemType Directory -Path $aimTemp -Force | Out-Null
-
 # Current session (so anything you run next in this script sees it)
 $env:AIM_TEMP_FOLDER = $aimTemp
-
 # Persist for services + future processes (machine scope)
 [Environment]::SetEnvironmentVariable("AIM_TEMP_FOLDER", $aimTemp, "Machine")
 
-
-$log_file = Join-Path $PWD "cp_installshield_log.txt"
-& ".\setup.exe" "/s" "/f1$silent_file" "$env:INSTALLER_USR;$env:INSTALLER_PWD" "/LOG=$log_file"
+$log_file = Join-Path $installerDir "cp_installshield_log.txt"
+& ".\setup.exe" "/s" "/f1$silent_file" "$env:INSTALLER_USR;$env:INSTALLER_PWD" "/f2$log_file"
 
 Start-Sleep -Seconds 2
 
