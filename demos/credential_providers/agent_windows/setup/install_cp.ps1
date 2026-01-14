@@ -13,10 +13,10 @@ $CYBR_DEMOS_PATH = "C:\cybr-demos"
 # Local setup
 Load-DotEnv "$ScriptRoot\vars.env"
 
-$s3_uri_vc_redist = $S3_URI_VC_REDIST
+#$s3_uri_vc_redist = $S3_URI_VC_REDIST
 $s3_uri_cp_installer = $S3_URI_CP_INSTALLER
 $zip_file  = $ZIP_FILE
-if (-not $s3_uri_vc_redist)   { throw "S3_URI_VC_REDIST is empty after Load-DotEnv" }
+#if (-not $s3_uri_vc_redist)   { throw "S3_URI_VC_REDIST is empty after Load-DotEnv" }
 if (-not $s3_uri_cp_installer)   { throw "S3_URI_CP_INSTALLER is empty after Load-DotEnv" }
 if (-not $zip_file) { throw "ZIP_FILE is empty after Load-DotEnv" }
 
@@ -36,8 +36,8 @@ if ($env:AWS_ACCESS_KEY_ID -and $env:AWS_SECRET_ACCESS_KEY) {
 $installerDir = Join-Path $ScriptRoot "installer"
 mkdir $installerDir -Force
 
-Get-S3File $s3_uri_vc_redist
-Start-Process "VC_redist.x64.exe" "/install /quiet /norestart -Wait"
+#Get-S3File $s3_uri_vc_redist
+#Start-Process "VC_redist.x64.exe" "/install /quiet /norestart -Wait"
 
 Get-S3File $s3_uri_cp_installer
 
