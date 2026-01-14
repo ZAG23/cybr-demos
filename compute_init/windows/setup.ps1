@@ -14,8 +14,8 @@ Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
 & "$ScriptRoot\install_ps7.ps1"
 & "$ScriptRoot\install_notepad++.ps1"
 #& "$ScriptRoot\install_ssh.ps1"
-& "$ScriptRoot\install_aws_tools.ps1"
 & "$ScriptRoot\install_chrome.ps1"
+& "$ScriptRoot\install_aws_tools.ps1"
 & "$ScriptRoot\install_iis.ps1"
 #--------------------------------------------------------------------------------------------------
 
