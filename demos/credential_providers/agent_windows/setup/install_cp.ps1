@@ -9,6 +9,8 @@ $CYBR_DEMOS_PATH = "C:\cybr-demos"
 . "$CYBR_DEMOS_PATH\demos\utility\powershell5\dotenv_functions.ps1"
 . "$CYBR_DEMOS_PATH\demos\utility\powershell5\aws_functions.ps1"
 . "$CYBR_DEMOS_PATH\demos\tenant_vars.ps1"
+. "$CYBR_DEMOS_PATH\demos\setup_functions\vault_functions.ps1"
+. "$CYBR_DEMOS_PATH\demos\setup_functions\identity_functions.ps1"
 
 # Local setup
 Load-DotEnv "$ScriptRoot\vars.env"
@@ -74,6 +76,14 @@ New-Item -ItemType Directory -Path $aimTemp -Force | Out-Null
 $env:AIM_TEMP_FOLDER = $aimTemp
 # Persist for services + future processes (machine scope)
 [Environment]::SetEnvironmentVariable("AIM_TEMP_FOLDER", $aimTemp, "Machine")
+
+
+$token = Get-IdentityToken -IspId "$env:TENANT_ID" -ClientId "$env:CLIENT_ID" -ClientSecret "$env:CLIENT_SECRET"
+
+Add-IpToPrivilegeCloudAllowList -Subdomain "$env:TENANT_SUBDOMAIN" -IdentityToken $token
+
+$installerUuid = Get-UserByName -IspId "$env:TENANT_ID" -IdentityToken $token -Username "$env:INSTALLER_USR"
+Reset-UserPassword -IspId $ispId -IdentityToken $token -UserUuid $installerUuid -UserSecret $installerSecret
 
 # dafault log file location is the same folder as the .iss file, setup.log
 & ".\setup.exe" "/s" "/f1$silent_file" "$env:INSTALLER_USR;$env:INSTALLER_PWD"
