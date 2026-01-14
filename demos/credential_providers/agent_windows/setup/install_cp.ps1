@@ -61,17 +61,9 @@ $silent_file = Join-Path $PWD "silent.iss"
 
 Copy-Item -Path $record_file -Destination $silent_file -Force
 
-# Read the whole file
-$content = Get-Content -Path $silent_file -Raw
-
-$apos = [char]39
-$pattern = "szEdit1=$apos[^$apos]*$apos"
-$replacement = "szEdit1=$apos$vault_fqdn$apos"
-
-$content = [regex]::Replace($content, $pattern, $replacement)
-
-# Write it back
-Set-Content -Path $silent_file -Value $content
+$content = Get-Content $silent_file -Raw
+$content = $content -replace '(?m)^szEdit1=.*$', "szEdit1=$vault_fqdn"
+Set-Content $silent_file $content -Encoding ASCII
 
 Start-Sleep -Seconds 1
 
