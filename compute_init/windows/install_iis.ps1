@@ -1,13 +1,21 @@
-Write-Host "# Installing IIS"
+Write-Host "# Installing IIS if not already installed"
 
 $ErrorActionPreference = 'Stop'
 $ConfirmPreference     = 'None'
 
 # ------------------------------
-# Install IIS + ASP.NET
+# Install IIS + ASP.NET (only if not already installed)
 # ------------------------------
-Install-WindowsFeature -Name Web-Server -IncludeManagementTools -Confirm:$false
-Install-WindowsFeature -Name Web-Asp-Net45 -Confirm:$false
+$webServer = Get-WindowsFeature Web-Server
+
+if (-not $webServer.Installed) {
+    Install-WindowsFeature -Name Web-Server -IncludeManagementTools -Confirm:$false
+}
+
+$aspNet = Get-WindowsFeature Web-Asp-Net45
+if (-not $aspNet.Installed) {
+    Install-WindowsFeature -Name Web-Asp-Net45 -Confirm:$false
+}
 
 Get-WindowsFeature Web-Server
 
