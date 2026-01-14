@@ -20,7 +20,7 @@ if (-not $s3_uri_vc_redist)   { throw "S3_URI_VC_REDIST is empty after Load-DotE
 if (-not $s3_uri_cp_installer)   { throw "S3_URI_CP_INSTALLER is empty after Load-DotEnv" }
 if (-not $zip_file) { throw "ZIP_FILE is empty after Load-DotEnv" }
 
-$vault_fqdn = "vault-${TENANT_SUBDOMAIN}.privilegecloud.cyberark.cloud"
+$vault_fqdn = "vault-$TENANT_SUBDOMAIN.privilegecloud.cyberark.cloud"
 
 # Get file from S3
 $region = $env:AWS_REGION
