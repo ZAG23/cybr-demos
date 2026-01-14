@@ -13,9 +13,11 @@ $CYBR_DEMOS_PATH = "C:\cybr-demos"
 # Local setup
 Load-DotEnv "$ScriptRoot\vars.env"
 
-$s3_uri    = $S3_URI
+$s3_uri_vc_redist = $S3_URI_VC_REDIST
+$s3_uri_cp_installer = $S3_URI_CP_INSTALLER
 $zip_file  = $ZIP_FILE
-if (-not $s3_uri)   { throw "S3_URI is empty after Load-DotEnv" }
+if (-not $s3_uri_vc_redist)   { throw "S3_URI_VC_REDIST is empty after Load-DotEnv" }
+if (-not $s3_uri_cp_installer)   { throw "S3_URI_CP_INSTALLER is empty after Load-DotEnv" }
 if (-not $zip_file) { throw "ZIP_FILE is empty after Load-DotEnv" }
 
 $vault_fqdn = "vault-${TENANT_SUBDOMAIN}.privilegecloud.cyberark.cloud"
@@ -31,10 +33,14 @@ if ($env:AWS_ACCESS_KEY_ID -and $env:AWS_SECRET_ACCESS_KEY) {
     Initialize-AWSDefaultConfiguration -Region $region
 }
 
-Get-S3File $s3_uri
-
-# Expand installer
 $installerDir = Join-Path $ScriptRoot "installer"
+mkdir $installerDir -Force
+
+Get-S3File $s3_uri_vc_redist
+Start-Process "VC_redist.x64.exe" "/install /quiet /norestart -Wait"
+
+Get-S3File $s3_uri_cp_installer
+
 Expand-Archive -Path $zip_file -DestinationPath $installerDir -Force
 Set-Location $installerDir
 
@@ -69,7 +75,20 @@ Set-Content -Path $silent_file -Value $content
 
 Start-Sleep -Seconds 1
 
-& ".\setup.exe" "/s" "/f1$silent_file" "$env:INSTALLER_USR;$env:INSTALLER_PWD"
+# Set and persist env var: AIM_TEMP_FOLDER (drop-in replacement)
+$aimTemp = "C:\ProgramData\CyberArk\AAM\Temp"
+
+New-Item -ItemType Directory -Path $aimTemp -Force | Out-Null
+
+# Current session (so anything you run next in this script sees it)
+$env:AIM_TEMP_FOLDER = $aimTemp
+
+# Persist for services + future processes (machine scope)
+[Environment]::SetEnvironmentVariable("AIM_TEMP_FOLDER", $aimTemp, "Machine")
+
+
+$log_file = Join-Path $PWD "cp_installshield_log.txt"
+& ".\setup.exe" "/s" "/f1$silent_file" "$env:INSTALLER_USR;$env:INSTALLER_PWD" "/LOG=$log_file"
 
 Start-Sleep -Seconds 2
 
