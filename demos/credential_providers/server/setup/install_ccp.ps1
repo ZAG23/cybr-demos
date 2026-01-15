@@ -33,12 +33,11 @@ if ($env:AWS_ACCESS_KEY_ID -and $env:AWS_SECRET_ACCESS_KEY) {
 $installerDir = Join-Path $ScriptRoot "installer"
 mkdir $installerDir -Force
 
-Get-S3File $s3_uri_cp_installer
+Get-S3File $s3_uri_cpp_installer
 
 Expand-Archive -Path $zip_file -DestinationPath $installerDir -Force
 Set-Location $installerDir
-
-msiexec.exe  /i "$installerDir\AIMWebService.msi" /qn
+msiexec.exe  /i "$installerDir\Central Credential Provider Web Service\AIMWebService.msi" /qn
 
 start-sleep -s 10
 
