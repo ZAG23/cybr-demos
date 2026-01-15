@@ -42,7 +42,6 @@ if (Test-PendingReboot) {
 # Get file from S3
 $region = $env:AWS_REGION
 if (-not $region) { $region = "us-east-1" }
-
 Set-DefaultAWSRegion -Region $region
 Get-S3File $s3_uri_cp_installer
 
@@ -97,3 +96,6 @@ Start-Sleep -Seconds 2
 
 Get-Date -UFormat "%A /%Y%m/%d %R %Z"
 Stop-Transcript
+
+# Suppress random outputs from script or scope
+$null
