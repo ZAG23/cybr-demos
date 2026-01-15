@@ -46,13 +46,16 @@ function Get-IdentityToken {
 
 function Get-UserByName {
     param (
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
         [string]$IspId,
 
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
         [string]$IdentityToken,
 
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
         [string]$Username
     )
 
@@ -60,40 +63,53 @@ function Get-UserByName {
 
     $headers = @{
         Authorization = "Bearer $IdentityToken"
-        "Content-Type" = "application/json"
+        Accept        = "application/json"
     }
 
-    $body = @{
-        username = $Username
-    } | ConvertTo-Json -Compress
+    $json = @{ username = $Username } | ConvertTo-Json -Compress
 
     try {
-        $response = Invoke-RestMethod `
+        $resp = Invoke-RestMethod `
             -Method Post `
             -Uri $uri `
             -Headers $headers `
-            -Body $body
+            -ContentType "application/json" `
+            -Body $json `
+            -ErrorAction Stop
     }
     catch {
-        Write-Error "ERROR: GetUserByName failed: $($_.Exception.Message)"
-        exit 1
+        throw "GetUserByName failed: $($_.Exception.Message)"
     }
 
-    return $response
+    if (-not $resp.success) {
+        throw "GetUserByName returned success=false. Message=$($resp.Message) ErrorCode=$($resp.ErrorCode) ErrorID=$($resp.ErrorID)"
+    }
+
+    $uuid = $resp.Result.Uuid
+    if ([string]::IsNullOrWhiteSpace($uuid)) {
+        throw "GetUserByName succeeded but Result.Uuid is empty/missing"
+    }
+
+    return $uuid
 }
+
 
 function Reset-UserPassword {
     param (
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
         [string]$IspId,
 
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
         [string]$IdentityToken,
 
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
         [string]$UserUuid,
 
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
         [string]$UserSecret
     )
 
@@ -101,23 +117,17 @@ function Reset-UserPassword {
 
     $headers = @{
         Authorization = "Bearer $IdentityToken"
-        "Content-Type" = "application/json"
+        Accept        = "application/json"
     }
 
-    $body = @{
-        ID          = $UserUuid
-        newPassword = $UserSecret
-    } | ConvertTo-Json -Compress
+    $json = @{ ID = $UserUuid; newPassword = $UserSecret } | ConvertTo-Json -Compress
 
+    #Write-Host "POST $uri"
+    #Write-Host $json
     try {
-        Invoke-RestMethod `
-            -Method Post `
-            -Uri $uri `
-            -Headers $headers `
-            -Body $body
+        Invoke-RestMethod -Method Post -Uri $uri -Headers $headers -ContentType "application/json" -Body $json -ErrorAction Stop
     }
     catch {
-        Write-Error "ERROR: ResetUserPassword failed: $($_.Exception.Message)"
-        exit 1
+        throw "ResetUserPassword failed: $($_.Exception.Message)"
     }
 }

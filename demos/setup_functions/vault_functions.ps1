@@ -1,25 +1,34 @@
 function Update-IpAllowlist {
     param (
-        [string]$Subdomain,
-        [string]$IdentityToken,
-        [string]$IpListJson   # JSON array string: ["1.0.0.4/32","2.0.0.5/24"]
+        [Parameter(Mandatory)] [string]$Subdomain,
+        [Parameter(Mandatory)] [string]$IdentityToken,
+        [Parameter(Mandatory)] [string]$IpListJson   # e.g. ["1.0.0.4/32","2.0.0.5/24"]
     )
 
     Write-Host "`nUpdating Privilege Cloud IP Allowlist: $IpListJson"
 
     $uri = "https://$Subdomain.privilegecloud.cyberark.cloud/api/advanced-settings/ip-allowlist"
 
+    $headers = @{
+        Authorization = "Bearer $IdentityToken"
+        Accept        = "application/json"
+    }
+
+    # Build body exactly like bash: { "customerPublicIPs": <json array> }
+    $bodyJson = "{ `"customerPublicIPs`": $IpListJson }"
+
+    #Write-Host "PUT $uri"
+    #Write-Host $bodyJson
+
     Invoke-RestMethod `
         -Method Put `
         -Uri $uri `
-        -Headers @{
-        Authorization = "Bearer $IdentityToken"
-        "Content-Type" = "application/json"
-    } `
-        -Body (@{
-        customerPublicIPs = (ConvertFrom-Json $IpListJson)
-    } | ConvertTo-Json -Compress)
+        -Headers $headers `
+        -ContentType "application/json" `
+        -Body $bodyJson `
+        -ErrorAction Stop
 }
+
 
 function Add-IpToPrivilegeCloudAllowList {
     param (

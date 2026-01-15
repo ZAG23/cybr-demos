@@ -83,7 +83,7 @@ $token = Get-IdentityToken -IspId "$env:TENANT_ID" -ClientId "$env:CLIENT_ID" -C
 Add-IpToPrivilegeCloudAllowList -Subdomain "$env:TENANT_SUBDOMAIN" -IdentityToken $token
 
 $installerUuid = Get-UserByName -IspId "$env:TENANT_ID" -IdentityToken $token -Username "$env:INSTALLER_USR"
-Reset-UserPassword -IspId $ispId -IdentityToken $token -UserUuid $installerUuid -UserSecret $installerSecret
+Reset-UserPassword -IspId "$env:TENANT_ID" -IdentityToken $token -UserUuid $installerUuid -UserSecret $env:INSTALLER_PWD
 
 # dafault log file location is the same folder as the .iss file, setup.log
 & ".\setup.exe" "/s" "/f1$silent_file" "$env:INSTALLER_USR;$env:INSTALLER_PWD"
