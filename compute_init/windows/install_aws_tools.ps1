@@ -12,15 +12,17 @@ $ConfirmPreference     = 'None'
 # ------------------------------
 # Check if AWSPowerShell is already installed
 # ------------------------------
-$existing = Get-Module -ListAvailable -Name AWSPowerShell |
-        Sort-Object Version -Descending |
-        Select-Object -First 1
+$paths = @(
+    "$env:ProgramFiles\WindowsPowerShell\Modules\AWSPowerShell",
+    "$env:ProgramFiles\WindowsPowerShell\Modules\AWSPowerShell.NetCore",
+    "$env:ProgramFiles\WindowsPowerShell\Modules\AWS.Tools.Common"
+)
 
-if ($existing) {
-    Write-Host "AWSPowerShell already installed: $($existing.Version)"
-    Get-Module -ListAvailable -Name AWSPowerShell
+if ($paths | Where-Object { Test-Path $_ } | Select-Object -First 1) {
+    Write-Host "AWS PowerShell module folder exists"
     return
 }
+
 
 # ------------------------------
 # Ensure PSGallery is trusted (prevents prompts)
