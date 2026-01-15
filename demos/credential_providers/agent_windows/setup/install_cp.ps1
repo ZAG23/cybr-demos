@@ -43,21 +43,14 @@ if (Test-PendingReboot) {
 $region = $env:AWS_REGION
 if (-not $region) { $region = "us-east-1" }
 
-if ($env:AWS_ACCESS_KEY_ID -and $env:AWS_SECRET_ACCESS_KEY) {
-    Connect-AWS -AccessKey $env:AWS_ACCESS_KEY_ID -SecretKey $env:AWS_SECRET_ACCESS_KEY -Region $region
-} else {
-    Write-Host "No AWS keys found using IAM Role"
-    Initialize-AWSDefaultConfiguration -Region $region
-}
-
-$installerDir = Join-Path $ScriptRoot "installer"
-mkdir $installerDir -Force
+Set-DefaultAWSRegion -Region $region
+Get-S3File $s3_uri_cp_installer
 
 #Get-S3File $s3_uri_vc_redist
 #Start-Process "VC_redist.x64.exe" "/install /quiet /norestart -Wait"
 
-Get-S3File $s3_uri_cp_installer
-
+$installerDir = Join-Path $ScriptRoot "installer"
+mkdir $installerDir -Force
 Expand-Archive -Path $zip_file -DestinationPath $installerDir -Force
 Set-Location $installerDir
 
@@ -65,10 +58,8 @@ Set-Location $installerDir
 # !Do not use cred file, advanced setup, vault IP, cred user name
 #
 # Instead of manually configuring a response file before running the silent CP installation,
-# Record mode runs an interactive CP installation, collects the values provided during the installation,
-# and saves them to a response file.
+# Record mode runs an interactive CP installation, and saves the values provided to a response file,
 # The response file is fully defined and can be used when installing other CPs using Full silent mode.
-# This is especially useful if you are setting up a wide-scale installation of CPs.
 # $record_file = Join-Path $PWD "record.iss"
 # .\setup.exe /r /f1"$record_file"
 
@@ -92,11 +83,10 @@ $env:AIM_TEMP_FOLDER = $aimTemp
 # Persist for services + future processes (machine scope)
 [Environment]::SetEnvironmentVariable("AIM_TEMP_FOLDER", $aimTemp, "Machine")
 
-
+# Add this IP to the PrivilegeC Cloud Vault Allow List
 $token = Get-IdentityToken -IspId "$env:TENANT_ID" -ClientId "$env:CLIENT_ID" -ClientSecret "$env:CLIENT_SECRET"
-
 Add-IpToPrivilegeCloudAllowList -Subdomain "$env:TENANT_SUBDOMAIN" -IdentityToken $token
-
+# Unlock Installer user by reseting the password
 $installerUuid = Get-UserByName -IspId "$env:TENANT_ID" -IdentityToken $token -Username "$env:INSTALLER_USR"
 Reset-UserPassword -IspId "$env:TENANT_ID" -IdentityToken $token -UserUuid $installerUuid -UserSecret $env:INSTALLER_PWD
 
