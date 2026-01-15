@@ -37,5 +37,5 @@ Pin-ToTaskbar "C:\Windows\system32\taskschd.msc"
 New-Item -Path "C:\bootstrap\setup.completed" -ItemType File -Force | Out-Null
 #--------------------------------------------------------------------------------------------------
 Stop-Transcript
-#Restart-Computer -ComputerName localhost -Force
+Restart-Computer -ComputerName localhost -Force
 #--------------------------------------------------------------------------------------------------

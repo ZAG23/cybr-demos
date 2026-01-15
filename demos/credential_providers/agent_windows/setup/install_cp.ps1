@@ -24,6 +24,21 @@ if (-not $zip_file) { throw "ZIP_FILE is empty after Load-DotEnv" }
 
 $vault_fqdn = "vault-$env:TENANT_SUBDOMAIN.privilegecloud.cyberark.cloud"
 
+function Test-PendingReboot {
+    return (
+    (Test-Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired") -or
+            (Test-Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending") -or
+            ((Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager" `
+            -Name PendingFileRenameOperations `
+            -ErrorAction SilentlyContinue) -ne $null)
+    )
+}
+
+if (Test-PendingReboot) {
+    Write-Error "Pending reboot detected. Reboot required before installing CyberArk AAM."
+    exit 3010
+}
+
 # Get file from S3
 $region = $env:AWS_REGION
 if (-not $region) { $region = "us-east-1" }
