@@ -8,31 +8,32 @@ sudo systemctl start rke2-server.service
 
 sudo cat /etc/rancher/rke2/rke2.yaml
 
-
 # server: https://<PUBLIC_IP>:6443
 # server: https://127.0.0.1:6443
 
-
 mkdir -p ~/.kube
 sudo cp /etc/rancher/rke2/rke2.yaml ~/.kube/config
+sudo chown ubuntu:ubuntu /home/ubuntu/.kube/config
+chmod 600 /home/ubuntu/.kube/config
 
 kubectl get nodes
 kubectl get pods -A
 
-
 # You must configure RKE2 JWKS with your own issuer to expose: /openid/v1/jwks
-
-/etc/rancher/rke2/config.yaml:
-
-## For testing internal-only:
-#kube-apiserver-arg:
-#  - "service-account-issuer=https://kubernetes.default.svc"
-#  - "service-account-jwks-uri=https://kubernetes.default.svc/openid/v1/jwks"
+sudo mkdir -p /etc/rancher/rke2
+sudo tee /etc/rancher/rke2/config.yaml >/dev/null <<'EOF'
+# For testing internal-only:
+kube-apiserver-arg:
+  - "service-account-issuer=https://kubernetes.default.svc"
+  - "service-account-jwks-uri=https://kubernetes.default.svc/openid/v1/jwks"
+EOF
+cat /etc/rancher/rke2/config.yaml
 
 sudo systemctl restart rke2-server
 
 # JWKS retrieval becomes but needs token auth:
-#### for Rnachr Use Public Key for POCs, in prod a pass throuh service might be used with below to expose jwks without auth
+# For POCs use Rancher Public Key
+# In prod a https service might be used with below to publicly expose jwks
 # curl -s https://127.0.0.1/openid/v1/jwks
 
 # v1.24+ style token

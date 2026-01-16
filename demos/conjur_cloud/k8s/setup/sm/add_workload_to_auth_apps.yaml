@@ -1,0 +1,12 @@
+# metadata
+# mode: append-policy
+---
+# This policy defines adding a workload to the authenticator app group
+- !policy
+  id: poc-k8s
+  body:
+  - !grant
+    roles:
+      - !group apps
+    members:
+      - !host poc-workloads/{{ .JWT_CLAIM_IDENTITY_VALUE }}
