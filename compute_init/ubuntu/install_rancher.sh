@@ -45,7 +45,4 @@ kubectl get --raw /.well-known/openid-configuration || echo "no discovery"
 kubectl get --raw /openid/v1/jwks || echo "no jwks"
 kubectl get --raw /openid/v1/jwks | jq .
 
-kubectl get --raw /.well-known/openid-configuration | jq .
-kubectl get --raw /openid/v1/jwks | jq .
-
 kubectl get --raw "https://rke2-api.yourdomain.com:6443/openid/v1/jwks" --insecure-skip-tls-verify | jq .

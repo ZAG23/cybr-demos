@@ -9,4 +9,4 @@
     roles:
       - !group apps
     members:
-      - !host poc-workloads/{{ .JWT_CLAIM_IDENTITY_VALUE }}
+      - !host /data/poc-workloads/{{ .JWT_CLAIM_IDENTITY_VALUE }}

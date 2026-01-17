@@ -80,7 +80,7 @@ openssl s_client -connect "$sm_fqdn:443" -servername "$sm_fqdn" </dev/null 2>/de
 | openssl x509 -inform pem -text > sm.pem
 
 # Helm install Release names does not allow '_' use '-'
-helm install poc-sm \
+helm upgrade --install poc-sm \
      $demo_path/setup/k8s/charts/poc-sm \
      --namespace default \
      --set namespace=$sm_service_name \

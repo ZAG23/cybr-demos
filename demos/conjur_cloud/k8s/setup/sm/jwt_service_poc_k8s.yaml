@@ -9,7 +9,7 @@
 
   # If the JWKS service is publicly available, uncomment 'jwks-uri'.
   - !variable
-    id: jwks-uri
+    id: public-keys
 
   # This variable sets which claim in the JWT to use to determine the conjur host identity.
   - !variable
