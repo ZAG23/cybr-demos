@@ -27,8 +27,40 @@ echo "client_secret=${client_secret:-<unset>}"
 echo "jwt_claim_identity=${jwt_claim_identity:-<unset>}"
 echo "sm_service_name=${sm_service_name:-<unset>}"
 
-auth_jwks_validation="conjur/authn-jwt/$sm_service_name/public-keys"
-auth_jwks_validation_value="{"type":"jwks","value":{ GET-FROM-RANCHER-K8s }"
+# Setup Auth Service
+printf "\n\napply conjur policies\n"
+
+printf '\n\nplatform_auth %s %s %s\n' "${isp_id:-}" "${client_id:-}" "${client_secret:-}"
+identity_token=$(get_identity_token "$isp_id" "$client_id" "$client_secret")
+printf "\n\nidentity_token: \n$identity_token\n"
+
+printf "\n\nconjur_isp_auth $isp_subdomain identity_token\n"
+conjur_token=$(get_conjur_token "$isp_subdomain" "$identity_token")
+printf "\n\nconjur_token: \n$conjur_token\n"
+
+apply_conjur_policy "$isp_subdomain" "$conjur_token" "data" "$(cat poc-workloads.yaml)"
+
+case "${K8S_TYPE,,}" in
+  rancher|ocp)
+    validation_type="public-keys"
+    validation_value="{"type":"jwks","value":{ $K8S_PUBLIC_KEYS }"
+    apply_conjur_policy "$isp_subdomain" "$conjur_token" "conjur/authn-jwt" "$(cat authenticator_public_key.yaml)"
+
+    ;;
+  eks|k8s)
+    validation_type="jwks"
+    validation_value="K8S_JWKS_URI"
+    ;;
+  *)
+    echo "ERROR: Unsupported K8S_TYPE=$K8S_TYPE" >&2
+    apply_conjur_policy "$isp_subdomain" "$conjur_token" "conjur/authn-jwt" "$(cat authenticator_jwks.yaml)"
+    exit 1
+    ;;
+esac
+
+# Configure Auth Service
+auth_jwks_validation="conjur/authn-jwt/$sm_service_name/$validation_type"
+auth_jwks_validation_value="$validation_value"
 
 auth_issuer_id="conjur/authn-jwt/$sm_service_name/issuer"
 auth_issuer_value="https://kubernetes.default.svc"
@@ -39,23 +71,7 @@ auth_token_app_property_value="sub"
 auth_identity_path_id="conjur/authn-jwt/$sm_service_name/identity-path"
 auth_identity_path_value="data/poc-workloads"
 
-printf '\n\nplatform_auth %s %s %s\n' "${isp_id:-}" "${client_id:-}" "${client_secret:-}"
-identity_token=$(get_identity_token "$isp_id" "$client_id" "$client_secret")
-printf "\n\nidentity_token: \n$identity_token\n"
-
-printf "\n\nconjur_isp_auth $isp_subdomain identity_token\n"
-conjur_token=$(get_conjur_token "$isp_subdomain" "$identity_token")
-printf "\n\nconjur_token: \n$conjur_token\n"
-
-# Setup Auth Service
-printf "\n\napply conjur policies\n"
-
-apply_conjur_policy "$isp_subdomain" "$conjur_token" "data" "$(cat poc-workloads.yaml)"
-
-apply_conjur_policy "$isp_subdomain" "$conjur_token" "conjur/authn-jwt" "$(cat authenticator_public_key.yaml)"
-
-printf "\n\napply_conjur_secret $isp_subdomain conjur_token id value\n"
-
+printf "\n\nConfigure Authenticator: $sm_service_name\n"
 apply_conjur_secret "$isp_subdomain" "$conjur_token" "$auth_jwks_validation" "$auth_jwks_validation_value"
 apply_conjur_secret "$isp_subdomain" "$conjur_token" "$auth_token_app_property_id" "$auth_token_app_property_value"
 apply_conjur_secret "$isp_subdomain" "$conjur_token" "$auth_identity_path_id" "$auth_identity_path_value"
