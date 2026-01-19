@@ -26,6 +26,9 @@ spec:
           volumeMounts:
             - name: jwt-token
               mountPath: /var/run/secrets/tokens
+            - name: demo-script
+              mountPath: /opt/demo
+              readOnly: true
       volumes:
         - name: jwt-token
           projected:
@@ -40,3 +43,7 @@ spec:
               - path: "annotations"
                 fieldRef:
                   fieldPath: metadata.annotations
+        - name: demo-scripts
+          configMap:
+            name: demo-scripts
+            defaultMode: 0755

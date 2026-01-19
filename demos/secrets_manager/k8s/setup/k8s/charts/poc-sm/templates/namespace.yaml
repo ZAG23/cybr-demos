@@ -50,3 +50,20 @@ roleRef:
   kind: Role
   apiGroup: rbac.authorization.k8s.io
   name: secrets-access
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demo-scripts
+data:
+  info.sh: |
+    #!/bin/sh
+    set -eux
+    echo "Starting demo script"
+    cat /var/run/secrets/tokens/jwt
+    ls -l /opt/secrets/conjur/secrets
+  direct.sh: |
+    #!/bin/sh
+    set -eu
+    echo "helper running"
