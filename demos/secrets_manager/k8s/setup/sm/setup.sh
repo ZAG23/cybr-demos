@@ -3,7 +3,7 @@
 # shellcheck disable=SC2059
 set -euo pipefail
 
-demo_path="$CYBR_DEMOS_PATH/demos/secret_manager/k8s"
+demo_path="$CYBR_DEMOS_PATH/demos/secrets_manager/k8s"
 # Set environment variables using .env file
 # -a means that every bash variable would become an environment variable
 # Using ‘+’ rather than ‘-’ causes the option to be turned off
@@ -43,9 +43,11 @@ apply_conjur_policy "$isp_subdomain" "$conjur_token" "data" "$(cat poc-workloads
 case "${K8S_TYPE,,}" in
   rancher|ocp)
     validation_type="public-keys"
-    validation_value="{"type":"jwks","value":{ $K8S_PUBLIC_KEYS }"
-    apply_conjur_policy "$isp_subdomain" "$conjur_token" "conjur/authn-jwt" "$(cat authenticator_public_key.yaml)"
+    # user jq -cn --argjson to preserve json quoting
+    validation_value=$(jq -cn --argjson jwks "$K8S_PUBLIC_KEYS" '{type:"jwks", value:$jwks}')
 
+    printf "\n\nvalidation_value: \n$validation_value\n"
+    apply_conjur_policy "$isp_subdomain" "$conjur_token" "conjur/authn-jwt" "$(cat authenticator_public_key.yaml)"
     ;;
   eks|k8s)
     validation_type="jwks"
@@ -87,7 +89,7 @@ resolve_template "workload.tmpl.yaml" "workload.yaml"
 resolve_template "add_workload_to_safe.tmpl.yaml" "add_workload_to_safe.yaml"
 resolve_template "add_workload_to_authenticator.tmpl.yaml" "add_workload_to_authenticator.yaml"
 
-printf "\n\napply_conjur_policies $isp_subdomain conjur_token branch policy\n"
+printf "\n\napply workload policies $isp_subdomain\n"
 
 apply_conjur_policy "$isp_subdomain" "$conjur_token" "data" "$(cat workload.yaml)"
 apply_conjur_policy "$isp_subdomain" "$conjur_token" "data" "$(cat add_workload_to_safe.yaml)"

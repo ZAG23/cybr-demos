@@ -1,6 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
+demo_path="$CYBR_DEMOS_PATH/demos/secrets_manager/k8s"
+
 # Init K8s metadata
 cd "$demo_path/setup/k8s"
 ./init_rancher.sh
