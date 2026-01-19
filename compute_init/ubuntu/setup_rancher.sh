@@ -4,9 +4,9 @@ set -euo pipefail
 # ------------------------------
 # Base paths
 # ------------------------------
-export CYBR_DEMOS_PATH="${CYBR_DEMOS_PATH:-/opt/cybr-demos}"
+export cybr_demos_path="${CYBR_DEMOS_PATH:-/opt/cybr-demos}"
 
-settings_dir="${CYBR_DEMOS_PATH}/settings"
+settings_dir="${cybr_demos_path}/settings"
 log_file="${settings_dir}/init_log"
 sentinel="${settings_dir}/.initialized"
 
@@ -45,30 +45,26 @@ log "Starting compute + demo initialization..."
 # Unified script list
 # ------------------------------
 scripts=(
-  "COMPUTE:${CYBR_DEMOS_PATH}/compute_init/ubuntu/install_jq.sh"
-  "COMPUTE:${CYBR_DEMOS_PATH}/compute_init/ubuntu/install_tree.sh"
-  "COMPUTE:${CYBR_DEMOS_PATH}/compute_init/ubuntu/install_awscli.sh"
-  "COMPUTE:${CYBR_DEMOS_PATH}/compute_init/ubuntu/install_kubectl.sh"
-  "COMPUTE:${CYBR_DEMOS_PATH}/compute_init/ubuntu/install_helm.sh"
-  "COMPUTE:${CYBR_DEMOS_PATH}/compute_init/ubuntu/install_rancher.sh"
-  "COMPUTE:${CYBR_DEMOS_PATH}/compute_init/ubuntu/install_k9s.sh"
+  "${cybr_demos_path}/compute_init/ubuntu/install_jq.sh"
+  "${cybr_demos_path}/compute_init/ubuntu/install_tree.sh"
+  "${cybr_demos_path}/compute_init/ubuntu/install_awscli.sh"
+  "${cybr_demos_path}/compute_init/ubuntu/install_kubectl.sh"
+  "${cybr_demos_path}/compute_init/ubuntu/install_helm.sh"
+  "${cybr_demos_path}/compute_init/ubuntu/install_rancher.sh"
+  "${cybr_demos_path}/compute_init/ubuntu/install_k9s.sh"
 
-  "DEMO:${CYBR_DEMOS_PATH}/demos/secrets_manager/k8s/setup.sh"
+  "${cybr_demos_path}/demos/secrets_manager/k8s/setup.sh"
 )
 
 # ------------------------------
 # Execution loop
 # ------------------------------
-for entry in "${scripts[@]}"; do
-  phase="${entry%%:*}"
-  script="${entry#*:}"
-
-  log "[${phase}] Running: ${script}"
-
+for script in "${scripts[@]}"; do
+  log "Running: ${script}"
   if run_as_ubuntu "bash '$script'"; then
-    log "[${phase}] SUCCESS: $(basename "$script")"
+    log "SUCCESS: $(basename "$script")"
   else
-    log "[${phase}] ERROR: $(basename "$script") failed. See ${log_file}"
+    log "ERROR: $(basename "$script") failed. See ${log_file}"
     exit 1
   fi
 done
