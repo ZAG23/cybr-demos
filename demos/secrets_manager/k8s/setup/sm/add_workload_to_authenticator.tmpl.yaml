@@ -3,7 +3,7 @@
 ---
 # This policy defines adding a workload to the authenticator app group
 - !policy
-  id: poc-k8s
+  id: {{ .SM_SERVICE_NAME }}
   body:
   - !grant
     roles:
