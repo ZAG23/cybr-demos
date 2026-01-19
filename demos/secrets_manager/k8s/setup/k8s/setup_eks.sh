@@ -7,7 +7,3 @@ set -euo pipefail
 
 # Setup kubconfig
 # aws eks update-kubeconfig --region ca-central-1 --name "$eks_name"
-
-
-
-

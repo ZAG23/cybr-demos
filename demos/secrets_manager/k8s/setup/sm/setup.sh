@@ -3,7 +3,7 @@
 # shellcheck disable=SC2059
 set -euo pipefail
 
-demo_path="$CYBR_DEMOS_PATH/demos/conjur_cloud/k8s"
+demo_path="$CYBR_DEMOS_PATH/demos/secret_manager/k8s"
 # Set environment variables using .env file
 # -a means that every bash variable would become an environment variable
 # Using ‘+’ rather than ‘-’ causes the option to be turned off
@@ -48,11 +48,11 @@ conjur_token=$(get_conjur_token "$isp_subdomain" "$identity_token")
 printf "\n\nconjur_token: \n$conjur_token\n"
 
 # Setup Auth Service
-printf "\n\napply_conjur_policies $isp_subdomain conjur_token branch policy\n"
+printf "\n\napply conjur policies\n"
 
 apply_conjur_policy "$isp_subdomain" "$conjur_token" "data" "$(cat poc-workloads.yaml)"
 
-apply_conjur_policy "$isp_subdomain" "$conjur_token" "conjur/authn-jwt" "$(cat jwt_service_poc_k8s.yaml)"
+apply_conjur_policy "$isp_subdomain" "$conjur_token" "conjur/authn-jwt" "$(cat authenticator_public_key.yaml)"
 
 printf "\n\napply_conjur_secret $isp_subdomain conjur_token id value\n"
 
@@ -66,14 +66,14 @@ activate_conjur_service "$isp_subdomain" "$conjur_token" "authn-jwt/$sm_service_
 
 # Setup Workloads
 
-printf "\n\nresolve_template workload1.tmpl.yaml workload1.yaml\n"
-resolve_template "workload1.tmpl.yaml" "workload1.yaml"
+printf "\n\nresolve workload templates \n"
+resolve_template "workload.tmpl.yaml" "workload.yaml"
 resolve_template "add_workload_to_safe.tmpl.yaml" "add_workload_to_safe.yaml"
 resolve_template "add_workload_to_authenticator.tmpl.yaml" "add_workload_to_authenticator.yaml"
 
 printf "\n\napply_conjur_policies $isp_subdomain conjur_token branch policy\n"
 
-apply_conjur_policy "$isp_subdomain" "$conjur_token" "data" "$(cat workload1.yaml)"
+apply_conjur_policy "$isp_subdomain" "$conjur_token" "data" "$(cat workload.yaml)"
 apply_conjur_policy "$isp_subdomain" "$conjur_token" "data" "$(cat add_workload_to_safe.yaml)"
 apply_conjur_policy "$isp_subdomain" "$conjur_token" "conjur/authn-jwt" "$(cat add_workload_to_authenticator.yaml)"
 printf "\n"
