@@ -9,7 +9,7 @@
   - !host
     id: {{ .JWT_CLAIM_IDENTITY_VALUE }}
     annotations:
-      authn-jwt/poc-k8s/sub: {{ .JWT_CLAIM_IDENTITY_VALUE }}
+      authn-jwt/{{ .SM_SERVICE_NAME }}/sub: {{ .JWT_CLAIM_IDENTITY_VALUE }}
       authn/api-key: true
 
 
