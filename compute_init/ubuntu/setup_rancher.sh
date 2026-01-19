@@ -33,9 +33,10 @@ log() {
 }
 
 run_as_ubuntu() {
-  local cmd="$1"
-  sudo -i -u ubuntu bash -lc "$cmd" >>"$log_file" 2>&1
+  # run arbitrary command as ubuntu, preserving HOME, no login shell side-effects
+  sudo -u ubuntu -H -- "$@" >>"$log_file" 2>&1
 }
+
 
 export DEBIAN_FRONTEND=noninteractive
 
@@ -61,7 +62,7 @@ scripts=(
 # ------------------------------
 for script in "${scripts[@]}"; do
   log "Running: ${script}"
-  if run_as_ubuntu "bash '$script'"; then
+  if run_as_ubuntu bash "$script"; then
     log "SUCCESS: $(basename "$script")"
   else
     log "ERROR: $(basename "$script") failed. See ${log_file}"

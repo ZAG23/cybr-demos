@@ -27,6 +27,7 @@ kube-apiserver-arg:
   - "service-account-issuer=https://kubernetes.default.svc"
   - "service-account-jwks-uri=https://kubernetes.default.svc/openid/v1/jwks"
 EOF
+
 cat /etc/rancher/rke2/config.yaml
 
 sudo systemctl restart rke2-server
@@ -36,4 +37,3 @@ kubectl get nodes
 kubectl get --raw /.well-known/openid-configuration || echo "no discovery"
 kubectl get --raw /openid/v1/jwks || echo "no jwks"
 kubectl get --raw /openid/v1/jwks | jq .
-kubectl get --raw "https://localhost:6443/openid/v1/jwks" --insecure-skip-tls-verify | jq .
