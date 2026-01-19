@@ -31,18 +31,9 @@ cat /etc/rancher/rke2/config.yaml
 
 sudo systemctl restart rke2-server
 
-# JWKS retrieval becomes but needs token auth:
-# For POCs use Rancher Public Key
-# In prod a https service might be used with below to publicly expose jwks
-# curl -s https://127.0.0.1/openid/v1/jwks
-
-# v1.24+ style token
-TOKEN=$(kubectl create token default) && curl -sk -H "Authorization: Bearer $TOKEN" https://kubernetes.default.svc:6443/openid/v1/jwks | jq .
-
 # Checks verify JWKS:
 kubectl get nodes
 kubectl get --raw /.well-known/openid-configuration || echo "no discovery"
 kubectl get --raw /openid/v1/jwks || echo "no jwks"
 kubectl get --raw /openid/v1/jwks | jq .
-
-kubectl get --raw "https://rke2-api.yourdomain.com:6443/openid/v1/jwks" --insecure-skip-tls-verify | jq .
+kubectl get --raw "https://localhost:6443/openid/v1/jwks" --insecure-skip-tls-verify | jq .
