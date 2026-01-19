@@ -47,6 +47,7 @@ case "${K8S_TYPE,,}" in
     validation_value=$(jq -cn --argjson jwks "$K8S_PUBLIC_KEYS" '{type:"jwks", value:$jwks}')
 
     printf "\n\nvalidation_value: \n$validation_value\n"
+    resolve_template "authenticator_jwks.tmpl.yaml" "authenticator_jwks.yaml"
     apply_conjur_policy "$isp_subdomain" "$conjur_token" "conjur/authn-jwt" "$(cat authenticator_public_key.yaml)"
     ;;
   eks|k8s)
@@ -55,6 +56,7 @@ case "${K8S_TYPE,,}" in
     ;;
   *)
     echo "ERROR: Unsupported K8S_TYPE=$K8S_TYPE" >&2
+    resolve_template "authenticator_jwks.tmpl.yaml" "authenticator_jwks.yaml"
     apply_conjur_policy "$isp_subdomain" "$conjur_token" "conjur/authn-jwt" "$(cat authenticator_jwks.yaml)"
     exit 1
     ;;

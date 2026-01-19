@@ -3,7 +3,7 @@
 ---
 # This policy defines a JWT authenticator to be used with an instance of Gitlab
 - !policy
-  id: poc-k8s
+  id: {{ .SM_SERVICE_NAME }}
   body:
   - !webservice
 
