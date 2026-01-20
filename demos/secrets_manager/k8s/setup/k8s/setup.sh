@@ -5,6 +5,7 @@ set -euo pipefail
 # Environment Setup
 # ------------------------------------------------------------------------------
 
+export CYBR_DEMOS_PATH="${CYBR_DEMOS_PATH:-/opt/cybr-demos}"
 demo_path="$CYBR_DEMOS_PATH/demos/secrets_manager/k8s"
 # Set environment variables using .env file
 # -a means that every bash variable would become an environment variable
