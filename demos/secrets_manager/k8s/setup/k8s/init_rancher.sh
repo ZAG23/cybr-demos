@@ -1,6 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
+export CYBR_DEMOS_PATH="${CYBR_DEMOS_PATH:-/opt/cybr-demos}"
 demo_path="$CYBR_DEMOS_PATH/demos/secrets_manager/k8s"
 
 # For POCs use Rancher Public Key
