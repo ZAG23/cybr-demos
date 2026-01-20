@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+set -euox pipefail
 
 # Install Rancher
 curl -sfL https://get.rke2.io | sudo INSTALL_RKE2_TYPE=server sh -
