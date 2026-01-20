@@ -1,39 +1,74 @@
 #!/bin/bash
-set -euox pipefail
+set -euo pipefail
+set -x
 
-# Install Rancher
-curl -sfL https://get.rke2.io | sudo INSTALL_RKE2_TYPE=server sh -
-sudo systemctl enable rke2-server.service
-sudo systemctl start rke2-server.service
+# ------------------------------
+# Install / start RKE2 (server)
+# ------------------------------
+if ! systemctl list-unit-files | grep -q '^rke2-server\.service'; then
+  curl -sfL https://get.rke2.io | INSTALL_RKE2_TYPE=server sh -
+fi
 
-sudo cat /etc/rancher/rke2/rke2.yaml
+systemctl enable rke2-server.service
+systemctl start rke2-server.service
 
-# server: https://<PUBLIC_IP>:6443
-# server: https://127.0.0.1:6443
+# ------------------------------
+# Wait for kubeconfig to exist
+# ------------------------------
+for i in {1..60}; do
+  [[ -f /etc/rancher/rke2/rke2.yaml ]] && break
+  sleep 2
+done
+[[ -f /etc/rancher/rke2/rke2.yaml ]] || { echo "rke2.yaml not found"; exit 1; }
 
-mkdir -p ~/.kube
-sudo cp /etc/rancher/rke2/rke2.yaml ~/.kube/config
-sudo chown ubuntu:ubuntu /home/ubuntu/.kube/config
-chmod 600 /home/ubuntu/.kube/config
+# ------------------------------
+# Ensure kubectl is available (RKE2 ships one)
+# Prefer RKE2 kubectl to avoid PATH issues
+# ------------------------------
+KUBECTL="/var/lib/rancher/rke2/bin/kubectl"
+if [[ -x "$KUBECTL" ]]; then
+  ln -sf "$KUBECTL" /usr/local/bin/kubectl
+fi
+command -v kubectl >/dev/null 2>&1 || { echo "kubectl not found in PATH"; exit 1; }
 
-kubectl get nodes
-kubectl get pods -A
+# ------------------------------
+# Write ubuntu kubeconfig (no ~ ambiguity)
+# ------------------------------
+install -d -m 0700 -o ubuntu -g ubuntu /home/ubuntu/.kube
+install -m 0600 -o ubuntu -g ubuntu /etc/rancher/rke2/rke2.yaml /home/ubuntu/.kube/config
 
-# You must configure RKE2 JWKS with your own issuer to expose: /openid/v1/jwks
-sudo mkdir -p /etc/rancher/rke2
-sudo tee /etc/rancher/rke2/config.yaml >/dev/null <<'EOF'
+# ------------------------------
+# Configure JWKS discovery (idempotent write)
+# NOTE: these settings are for internal testing only
+# ------------------------------
+install -d -m 0755 /etc/rancher/rke2
+
+cat >/etc/rancher/rke2/config.yaml <<'EOF'
 # For testing internal-only:
 kube-apiserver-arg:
   - "service-account-issuer=https://kubernetes.default.svc"
   - "service-account-jwks-uri=https://kubernetes.default.svc/openid/v1/jwks"
 EOF
 
-cat /etc/rancher/rke2/config.yaml
+systemctl restart rke2-server.service
 
-sudo systemctl restart rke2-server
+# ------------------------------
+# Wait for API to come up after restart
+# ------------------------------
+export KUBECONFIG=/etc/rancher/rke2/rke2.yaml
 
-# Checks verify JWKS:
+for i in {1..90}; do
+  kubectl get --raw=/readyz >/dev/null 2>&1 && break
+  sleep 2
+done
+
+kubectl get --raw=/readyz >/dev/null 2>&1 || { echo "API not ready"; exit 1; }
+
+# ------------------------------
+# Sanity checks
+# ------------------------------
 kubectl get nodes
+kubectl get pods -A
+
 kubectl get --raw /.well-known/openid-configuration || echo "no discovery"
 kubectl get --raw /openid/v1/jwks || echo "no jwks"
-kubectl get --raw /openid/v1/jwks | jq .
