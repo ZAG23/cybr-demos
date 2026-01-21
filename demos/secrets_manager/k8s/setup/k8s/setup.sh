@@ -64,7 +64,6 @@ kubectl get crd \
   clustersecretstores.external-secrets.io \
   -o 'custom-columns=NAME:.metadata.name,SERVED:.spec.versions[?(@.served==true)].name'
 
-
 # Verify pods are running
 kubectl -n external-secrets get pods -o wide
 
