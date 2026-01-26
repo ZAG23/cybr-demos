@@ -5,7 +5,8 @@ set -euo pipefail
 trap 'rc=$?; echo "[ERROR] line $LINENO: command failed: $BASH_COMMAND (exit=$rc)" >&2; exit $rc' ERR
 
 # Require CYBR_DEMOS_PATH (or provide a default)
-: "${CYBR_DEMOS_PATH:=/opt/cybr-demos}"
+#: "${CYBR_DEMOS_PATH:=/opt/cybr-demos}"
+export CYBR_DEMOS_PATH="${CYBR_DEMOS_PATH:-/opt/cybr-demos}"
 
 demo_path="$CYBR_DEMOS_PATH/demos/secrets_manager/k8s"
 
