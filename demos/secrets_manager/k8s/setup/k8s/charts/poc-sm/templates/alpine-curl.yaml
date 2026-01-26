@@ -30,6 +30,9 @@ spec:
             - name: demo-scripts
               mountPath: /opt/demo
               readOnly: true
+          envFrom:
+            - configMapRef:
+                name: sm-configmap
       volumes:
         - name: jwt-token
           projected:

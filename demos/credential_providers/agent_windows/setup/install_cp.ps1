@@ -9,8 +9,8 @@ $CYBR_DEMOS_PATH = "C:\cybr-demos"
 . "$CYBR_DEMOS_PATH\demos\utility\powershell5\dotenv_functions.ps1"
 . "$CYBR_DEMOS_PATH\demos\utility\powershell5\aws_functions.ps1"
 . "$CYBR_DEMOS_PATH\demos\tenant_vars.ps1"
-. "$CYBR_DEMOS_PATH\demos\setup_functions\vault_functions.ps1"
-. "$CYBR_DEMOS_PATH\demos\setup_functions\identity_functions.ps1"
+. "$CYBR_DEMOS_PATH\demos\setup_functions\powershell5\vault_functions.ps1"
+. "$CYBR_DEMOS_PATH\demos\setup_functions\powershell5\identity_functions.ps1"
 
 # Local setup
 Load-DotEnv "$ScriptRoot\vars.env"
@@ -84,7 +84,7 @@ $env:AIM_TEMP_FOLDER = $aimTemp
 
 # Add this IP to the PrivilegeC Cloud Vault Allow List
 $token = Get-IdentityToken -IspId "$env:TENANT_ID" -ClientId "$env:CLIENT_ID" -ClientSecret "$env:CLIENT_SECRET"
-Add-IpToPrivilegeCloudAllowList -Subdomain "$env:TENANT_SUBDOMAIN" -IdentityToken $token
+Add-IpToPrivilegeCloudAllowList -IspSubdomain "$env:TENANT_SUBDOMAIN" -IdentityToken $token
 # Unlock Installer user by reseting the password
 $installerUuid = Get-UserByName -IspId "$env:TENANT_ID" -IdentityToken $token -Username "$env:INSTALLER_USR"
 Reset-UserPassword -IspId "$env:TENANT_ID" -IdentityToken $token -UserUuid $installerUuid -UserSecret $env:INSTALLER_PWD
