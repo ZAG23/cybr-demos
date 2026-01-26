@@ -31,10 +31,10 @@ spec:
               mountPath: /opt/demo
               readOnly: true
           env:
-            - name: {{ .Values.sm_secret_1_name }}
-            - value: {{ .Values.sm_secret_1_id }}
-            - name: {{ .Values.sm_secret_2_name }}
-            - value: {{ .Values.sm_secret_2_id }}
+            - name: {{ .Values.sm_secret_1_name | quote }}
+              value: {{ .Values.sm_secret_1_id | quote }}
+            - name: {{ .Values.sm_secret_2_name | quote }}
+              value: {{ .Values.sm_secret_2_id | quote }}
           envFrom:
             - configMapRef:
                 name: sm-configmap
