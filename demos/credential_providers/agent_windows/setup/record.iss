@@ -30,5 +30,5 @@ Lang=0409
 [{718BA81E-A95C-4112-86A1-40F0FE8BDE9E}-SdShowDlgEdit2-0]
 szEdit1=vault-WizardTenantPreFix.privilegecloud.cyberark.cloud
 szEdit2=1858
-szProviderUser"CP_User1"
+szProviderUser="CP_User1"
 Result=1
