@@ -42,13 +42,13 @@ if (Test-PendingReboot) {
 # Get file from S3
 $region = $env:AWS_REGION
 if (-not $region) { $region = "us-east-1" }
-Set-DefaultAWSRegion -Region $region
+Initialize-AWSInstanceProfile -Region $region
 Get-S3File $s3_uri_cp_installer
 
 #Get-S3File $s3_uri_vc_redist
 #Start-Process "VC_redist.x64.exe" "/install /quiet /norestart -Wait"
 
-$installerDir = Join-Path $ScriptRoot "installer"
+$installerDir = "C:\CPInstallation"
 mkdir $installerDir -Force
 Expand-Archive -Path $zip_file -DestinationPath $installerDir -Force
 Set-Location $installerDir
