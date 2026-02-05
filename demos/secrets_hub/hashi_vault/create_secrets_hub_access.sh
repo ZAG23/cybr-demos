@@ -9,10 +9,10 @@ export VAULT_ADDR="${VAULT_ADDR:-http://127.0.0.1:8200}"
 export VAULT_TOKEN="${VAULT_TOKEN:-root}"
 
 export ROLE_NAME="${ROLE_NAME:-poc-sh-role}"
-export JWT_PATH="${JWT_PATH:-auth/jwt}"
+export JWT_PATH="${JWT_PATH:-jwt}"
 export MOUNT_PATH="${MOUNT_PATH:-kv}"
 export OIDC_DISCOVERY_URL="${OIDC_DISCOVERY_URL:-https://kubernetes.default.svc}"
-
+export VAULT_SKIP_VERIFY=true
 
 # --- Config (env or default) ---
 ROLE_NAME="${ROLE_NAME:-demo-role}"
@@ -104,7 +104,8 @@ echo -e "${BOLD}Configuring JWT auth backend...${RESET}"
 vault write auth/"$JWT_PATH"/config -<<EOF
 {
   "oidc_discovery_url": "$OIDC_DISCOVERY_URL",
-  "bound_issuer": "$OIDC_DISCOVERY_URL"
+  "bound_issuer": "$OIDC_DISCOVERY_URL",
+  "insecure_tls_skip_verify": true
 }
 EOF
 echo -e "✅ ${BOLD}JWT auth backend configured.${RESET}"
