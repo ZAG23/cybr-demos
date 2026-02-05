@@ -40,9 +40,6 @@ function Initialize-AWSInstanceProfile {
 
     Write-Host "Initializing AWS with instance profile..." -ForegroundColor Cyan
 
-    # Clear any cached credentials
-    Clear-AWSCredentialCache
-
     # Set default region
     Set-DefaultAWSRegion -Region $Region
 
