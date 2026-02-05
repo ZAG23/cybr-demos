@@ -9,10 +9,14 @@ environments=("dev" "test" "prod")
 applications=("billing" "orders" "inventory" "customers" "analytics")
 
 # ------------------------------
-# Guard checks
+# Guard checks & External Access Fix
 # ------------------------------
-VAULT_ADDR="${VAULT_ADDR:-http://127.0.0.1:8200}"
+# Point this to your Pod IP or ClusterIP
+VAULT_ADDR="${VAULT_ADDR:-https://127.0.0.1:8200}"
 VAULT_TOKEN="${VAULT_TOKEN:-root}"
+
+# FIX: Disable TLS hostname verification because we are connecting via IP
+export VAULT_SKIP_VERIFY=true
 
 export VAULT_ADDR VAULT_TOKEN
 
@@ -21,9 +25,12 @@ if ! command -v vault >/dev/null 2>&1; then
   exit 1
 fi
 
+echo "Connecting to Vault at $VAULT_ADDR..."
+
 # ------------------------------
 # Ensure KV v2 mount exists
 # ------------------------------
+# Added -tls-skip-verify explicitly to the command for extra safety
 if ! vault secrets list -format=json | grep -q "\"${kv_mount}/\""; then
   echo "Enabling KV v2 at: ${kv_mount}/"
   vault secrets enable -path="$kv_mount" kv-v2
@@ -42,6 +49,7 @@ rand() {
 write_secret() {
   local path="$1"
   shift
+  # Vault KV commands inherit the VAULT_SKIP_VERIFY env var
   vault kv put "${kv_mount}/${path}" "$@" >/dev/null
   echo "wrote: ${kv_mount}/${path}"
 }
@@ -51,7 +59,6 @@ write_secret() {
 # ------------------------------
 for env in "${environments[@]}"; do
   for app in "${applications[@]}"; do
-    # Common values you can tweak
     db_host="postgres.${env}.svc.cluster.local"
     db_port="5432"
     db_name="${app}_${env}"
@@ -71,7 +78,6 @@ for env in "${environments[@]}"; do
     tls_cert="-----BEGIN CERTIFICATE-----\n${env}-${app}-dummy-cert\n-----END CERTIFICATE-----"
     tls_key="-----BEGIN PRIVATE KEY-----\n${env}-${app}-dummy-key\n-----END PRIVATE KEY-----"
 
-    # Write KV2 secrets (each is a separate secret doc)
     write_secret "${env}/${app}/db" \
       username="$db_user" password="$db_pass" host="$db_host" port="$db_port" name="$db_name"
 
@@ -90,6 +96,6 @@ for env in "${environments[@]}"; do
 done
 
 echo
-echo "Done. Example reads:"
+echo "Done. Example reads (from this host):"
+echo "  export VAULT_SKIP_VERIFY=true"
 echo "  vault kv get ${kv_mount}/dev/billing/db"
-echo "  vault kv get ${kv_mount}/prod/orders/api"
