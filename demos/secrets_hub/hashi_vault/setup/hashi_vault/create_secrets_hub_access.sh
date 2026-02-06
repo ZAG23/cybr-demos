@@ -5,22 +5,26 @@ set -euo pipefail
 BOLD="\033[1m"
 RESET="\033[0m"
 
+## --- Config (env or default) ---
 export VAULT_ADDR="${VAULT_ADDR:-http://127.0.0.1:8200}"
 export VAULT_TOKEN="${VAULT_TOKEN:-root}"
 
 export ROLE_NAME="${ROLE_NAME:-poc-sh-role}"
+export POLICY_NAME="${POLICY_NAME:-SecretsHubHashiVaultRolePolicy}"
+
 export JWT_PATH="${JWT_PATH:-jwt}"
 export MOUNT_PATH="${MOUNT_PATH:-kv}"
 export OIDC_DISCOVERY_URL="${OIDC_DISCOVERY_URL:-https://kubernetes.default.svc}"
+
 export VAULT_SKIP_VERIFY=true
 
-# --- Config (env or default) ---
-ROLE_NAME="${ROLE_NAME:-demo-role}"
-JWT_PATH="${JWT_PATH:-auth/jwt}"
-MOUNT_PATH="${MOUNT_PATH:-kv}"
-OIDC_DISCOVERY_URL="${OIDC_DISCOVERY_URL:-https://kubernetes.default.svc}"
-
-export ROLE_NAME JWT_PATH MOUNT_PATH OIDC_DISCOVERY_URL
+## --- Config (env or default) ---
+#ROLE_NAME="${ROLE_NAME:-demo-role}"
+#JWT_PATH="${JWT_PATH:-auth/jwt}"
+#MOUNT_PATH="${MOUNT_PATH:-kv}"
+#OIDC_DISCOVERY_URL="${OIDC_DISCOVERY_URL:-https://kubernetes.default.svc}"
+#
+#export ROLE_NAME JWT_PATH MOUNT_PATH OIDC_DISCOVERY_URL
 
 
 # --- Validate env vars ---
@@ -39,7 +43,7 @@ fi
 #read -rp "$(echo -e "${BOLD}Enter engine mount path:${RESET} ")" MOUNT_PATH
 #read -rp "$(echo -e "${BOLD}Enter OIDC discovery URL:${RESET} ")" OIDC_DISCOVERY_URL
 
-POLICY_NAME="SecretsHubHashiVaultRolePolicy"
+#POLICY_NAME="SecretsHubHashiVaultRolePolicy"
 AUDIENCE="SecretsHub"
 SUBJECT="SECRETS_HUB_HASHI_IDENTITY_APPLICATION_USER"
 TOKEN_TTL=900
@@ -143,5 +147,6 @@ echo
 echo -e "${BOLD}Setup complete!${RESET}"
 echo -e "${BOLD}Vault address:${RESET} $VAULT_ADDR"
 echo -e "${BOLD}Mount path:${RESET} $MOUNT_PATH"
+echo -e "${BOLD}Policy name:${RESET} $POLICY_NAME"
 echo -e "${BOLD}Role name:${RESET} $ROLE_NAME"
 echo -e "${BOLD}Authentication path:${RESET} $JWT_PATH"

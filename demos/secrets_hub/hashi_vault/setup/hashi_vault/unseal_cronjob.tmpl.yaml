@@ -1,0 +1,75 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vault-unsealer
+  namespace: "{{ .NAMESPACE | quote }}"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: vault-unsealer-role
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "pods/exec"]
+    verbs: ["get", "list", "create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: vault-unsealer-binding
+subjects:
+  - kind: ServiceAccount
+    name: vault-unsealer
+    namespace: "{{ .NAMESPACE | quote }}"
+roleRef:
+  kind: ClusterRole
+  name: vault-unsealer-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: vault-auto-unseal
+  namespace: "{{ .NAMESPACE | quote }}"
+spec:
+  schedule: "*/5 * * * *" # Runs every 5 minutes
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: vault-unsealer
+          restartPolicy: OnFailure
+          containers:
+            - name: unsealer
+              image: bitnami/kubectl:latest
+              env:
+                # Replace these with your actual keys or reference a K8s Secret
+                - name: KEY1
+                  value: "{{ .VAULT_KEY1 | quote }}"
+                - name: KEY2
+                  value: "{{ .VAULT_KEY2 | quote }}"
+                - name: KEY3
+                  value: "{{ .VAULT_KEY3 | quote }}"
+                - name: VAULT_ADDR
+                  value: "{{ .VAULT_INIT_ADDR | quote }}"
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  echo "Checking Vault status..."
+                  
+                  # Check if Vault is sealed using the exit code or JSON output
+                  # We use -tls-skip-verify as per your original script
+                  SEALED=$(kubectl exec vault-0 -n hashi-vault -- env VAULT_ADDR=$VAULT_ADDR vault status -tls-skip-verify -format=json | grep -oP '"sealed":\s*\K[^,}]*')
+                  
+                  if [ "$SEALED" = "true" ]; then
+                    echo "Vault is sealed. Unsealing now..."
+                    kubectl exec vault-0 -n hashi-vault -- env VAULT_ADDR=$VAULT_ADDR vault operator unseal -tls-skip-verify $UNSEAL_KEY_1
+                    kubectl exec vault-0 -n hashi-vault -- env VAULT_ADDR=$VAULT_ADDR vault operator unseal -tls-skip-verify $UNSEAL_KEY_2
+                    kubectl exec vault-0 -n hashi-vault -- env VAULT_ADDR=$VAULT_ADDR vault operator unseal -tls-skip-verify $UNSEAL_KEY_3
+                    echo "Unseal commands sent."
+                  else
+                    echo "Vault is already unsealed. Nothing to do."
+                  fi

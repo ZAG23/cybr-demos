@@ -9,6 +9,5 @@ helm install cert-manager jetstack/cert-manager \
   --version v1.15.0 \
   --set crds.enabled=true
 
-kubectl apply -f cert_manager_manifest.yaml
-sleep 30
-kubectl get secret vault-server-tls -n hashi-vault
+resolve_template "letsencrypt_issuer.tmpl.yaml" "letsencrypt_issuer.yaml"
+kubectl apply -f letsencrypt_issuer.yaml
