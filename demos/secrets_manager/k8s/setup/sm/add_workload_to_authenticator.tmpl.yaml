@@ -1,0 +1,12 @@
+# metadata
+# mode: append-policy
+---
+# This policy defines adding a workload to the authenticator app group
+- !policy
+  id: {{ .SM_SERVICE_NAME }}
+  body:
+  - !grant
+    roles:
+      - !group apps
+    members:
+      - !host /data/poc-workloads/{{ .JWT_CLAIM_IDENTITY_VALUE }}

@@ -1,0 +1,68 @@
+server:
+  # 1. Mount the Cert-Manager Secret
+  extraVolumes:
+    - type: secret
+      name: vault-server-tls
+
+  extraVolumeMounts:
+    - name: vault-server-tls
+      mountPath: /vault/userconfig/vault-tls
+      readOnly: true
+
+  extraEnvironmentVars:
+    VAULT_ADDR: "https://127.0.0.1:8200"
+    VAULT_API_ADDR: "https://$(POD_IP):8200"
+    VAULT_SKIP_VERIFY: "true"
+
+  # 2. Force the correct configuration
+  standalone:
+    enabled: true
+    config: |
+      ui = true
+      listener "tcp" {
+        address = "[::]:8200"
+        cluster_address = "[::]:8201"
+        tls_disable = 0
+        tls_cert_file = "/vault/userconfig/vault-tls/tls.crt"
+        tls_key_file  = "/vault/userconfig/vault-tls/tls.key"
+      }
+      storage "file" {
+        path = "/vault/data"
+      }
+
+  # 3. Ensure the health probes use HTTPS
+  readinessProbe:
+    enabled: true
+    # Using exec is safer because it bypasses Kubelet's TLS trust issues
+    exec:
+      command:
+        - "/bin/sh"
+        - "-ec"
+        - "VAULT_ADDR=https://127.0.0.1:8200 vault status -tls-skip-verify"
+
+    livenessProbe:
+      enabled: true
+      # Switch this to exec to match readiness
+      exec:
+        command:
+          - "/bin/sh"
+          - "-ec"
+          - "VAULT_ADDR=https://127.0.0.1:8200 vault status -tls-skip-verify"
+      initialDelaySeconds: 60
+
+  # 4. Fix permissions so Vault can read the secret files
+  shareProcessNamespace: true
+  securityContext:
+    runAsUser: 100
+    runAsGroup: 1000
+    fsGroup: 1000
+
+  service:
+    # Change type from ClusterIP to NodePort
+    type: NodePort
+    # This is the port used inside the cluster
+    port: 8200
+    # This is the port on the Vault pod
+    targetPort: 8200
+    # This is the port exposed on your EC2 Host (Public IP)
+    nodePort: 30028 # Pick a port in the 30000-32767 range

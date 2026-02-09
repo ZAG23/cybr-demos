@@ -1,50 +1,81 @@
 #!/bin/bash
 set -euo pipefail
+set -x
 
-# Install Rancher
-curl -sfL https://get.rke2.io | sudo INSTALL_RKE2_TYPE=server sh -
-sudo systemctl enable rke2-server.service
-sudo systemctl start rke2-server.service
+# ------------------------------
+# Install / start RKE2 (server)
+# ------------------------------
+if ! systemctl list-unit-files | grep -q '^rke2-server\.service'; then
+  curl -sfL https://get.rke2.io | INSTALL_RKE2_TYPE=server sh -
+fi
 
-sudo cat /etc/rancher/rke2/rke2.yaml
+systemctl enable rke2-server.service
+systemctl start rke2-server.service
 
+# ------------------------------
+# Wait for kubeconfig to exist
+# ------------------------------
+for i in {1..60}; do
+  [[ -f /etc/rancher/rke2/rke2.yaml ]] && break
+  sleep 2
+done
+[[ -f /etc/rancher/rke2/rke2.yaml ]] || { echo "rke2.yaml not found"; exit 1; }
 
-# server: https://<PUBLIC_IP>:6443
-# server: https://127.0.0.1:6443
+# ------------------------------
+# Ensure kubectl is available (RKE2 ships one)
+# Prefer RKE2 kubectl to avoid PATH issues
+# ------------------------------
+KUBECTL="/var/lib/rancher/rke2/bin/kubectl"
+if [[ -x "$KUBECTL" ]]; then
+  ln -sf "$KUBECTL" /usr/local/bin/kubectl
+fi
+command -v kubectl >/dev/null 2>&1 || { echo "kubectl not found in PATH"; exit 1; }
 
+# ------------------------------
+# Write ubuntu kubeconfig (no ~ ambiguity)
+# ------------------------------
+install -d -m 0700 -o ubuntu -g ubuntu /home/ubuntu/.kube
+install -m 0600 -o ubuntu -g ubuntu /etc/rancher/rke2/rke2.yaml /home/ubuntu/.kube/config
 
-mkdir -p ~/.kube
-sudo cp /etc/rancher/rke2/rke2.yaml ~/.kube/config
+# ------------------------------
+# Configure JWKS discovery (idempotent write)
+# NOTE: these settings are for internal testing only
+# ------------------------------
+install -d -m 0755 /etc/rancher/rke2
 
+cat >/etc/rancher/rke2/config.yaml <<'EOF'
+# For testing internal-only:
+kube-apiserver-arg:
+  - "service-account-issuer=https://kubernetes.default.svc"
+  - "service-account-jwks-uri=https://kubernetes.default.svc/openid/v1/jwks"
+EOF
+
+systemctl restart rke2-server.service
+
+# ------------------------------
+# Wait for API to come up after restart
+# ------------------------------
+export KUBECONFIG=/etc/rancher/rke2/rke2.yaml
+
+for i in {1..90}; do
+  kubectl get --raw=/readyz >/dev/null 2>&1 && break
+  sleep 2
+done
+
+kubectl get --raw=/readyz >/dev/null 2>&1 || { echo "API not ready"; exit 1; }
+
+# ------------------------------
+# Sanity checks
+# ------------------------------
 kubectl get nodes
 kubectl get pods -A
 
-
-# You must configure RKE2 JWKS with your own issuer to expose: /openid/v1/jwks
-
-/etc/rancher/rke2/config.yaml:
-
-## For testing internal-only:
-#kube-apiserver-arg:
-#  - "service-account-issuer=https://kubernetes.default.svc"
-#  - "service-account-jwks-uri=https://kubernetes.default.svc/openid/v1/jwks"
-
-sudo systemctl restart rke2-server
-
-# JWKS retrieval becomes but needs token auth:
-#### for Rnachr Use Public Key for POCs, in prod a pass throuh service might be used with below to expose jwks without auth
-# curl -s https://127.0.0.1/openid/v1/jwks
-
-# v1.24+ style token
-TOKEN=$(kubectl create token default) && curl -sk -H "Authorization: Bearer $TOKEN" https://kubernetes.default.svc:6443/openid/v1/jwks | jq .
-
-# Checks verify JWKS:
-kubectl get nodes
 kubectl get --raw /.well-known/openid-configuration || echo "no discovery"
 kubectl get --raw /openid/v1/jwks || echo "no jwks"
-kubectl get --raw /openid/v1/jwks | jq .
 
-kubectl get --raw /.well-known/openid-configuration | jq .
-kubectl get --raw /openid/v1/jwks | jq .
-
-kubectl get --raw "https://rke2-api.yourdomain.com:6443/openid/v1/jwks" --insecure-skip-tls-verify | jq .
+# ------------------------------
+# Install the Local Storage Provisioner
+# ------------------------------
+kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.30/deploy/local-path-storage.yaml
+kubectl patch storageclass local-path -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+kubectl get sc

@@ -1,0 +1,12 @@
+# metadata
+# mode: append-policy
+---
+- !policy
+  id: vault
+  body:
+    # Grants safe access to a workload.
+    - !grant
+      roles:
+        - !group {{ .SAFE_NAME }}/delegation/consumers
+      members:
+        - !host /data/poc-workloads/{{ .JWT_CLAIM_IDENTITY_VALUE }}

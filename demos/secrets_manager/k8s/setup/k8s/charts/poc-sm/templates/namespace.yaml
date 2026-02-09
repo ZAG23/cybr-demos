@@ -50,3 +50,39 @@ roleRef:
   kind: Role
   apiGroup: rbac.authorization.k8s.io
   name: secrets-access
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demo-scripts
+  namespace: {{ .Values.namespace }}
+data:
+  info.sh: |
+    #!/bin/sh
+    set -eux
+    echo "Starting demo script"
+    cat /var/run/secrets/tokens/jwt
+    ls -l /opt/secrets/conjur/secrets
+  direct.sh: |
+    #!/bin/sh
+    set -eu
+    echo "JWT Direct Retrieval"
+    JWT=$(cat /var/run/secrets/tokens/jwt)
+    URI=$CONJUR_AUTHN_URL/conjur/authenticate
+    HEADER_1="Content-Type:application/x-www-form-urlencoded"
+    HEADER_2="Accept-Encoding:base64"
+    DATA="jwt=$JWT"
+    echo
+    echo curl -k -X POST $URI -H $HEADER_1 -H $HEADER_2 --data-urlencode $DATA
+    echo
+    session_token=$(curl -k -X POST $URI -H $HEADER_1 -H $HEADER_2 --data-urlencode $DATA)
+    echo $session_token
+    echo
+    SECRET_ID="{{ .Values.sm_secret_1_id | quote }}"
+    URI=https://$CONJUR_AUTHN_URL/secrets/conjur/variable/$SECRET_ID
+    HEADER_1="authorization: Token token=\"$sessionToken\""
+    echo
+    echo curl --request GET --url $URI --header $HEADER_1
+    curl --request GET --url $URI --header $HEADER_1
+    echo
