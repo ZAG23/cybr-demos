@@ -1,0 +1,58 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alpine-curl
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: alpine-curl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      role: demo
+      app: alpine-curl
+  template:
+    metadata:
+      labels:
+        role: demo
+        app: alpine-curl
+    spec:
+      serviceAccountName: {{ .Values.sm_app_service_account }}
+      containers:
+        - name: alpine-curl
+          image: alpine/curl
+          command: ["sleep","infinity"]
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - name: jwt-token
+              mountPath: /var/run/secrets/tokens
+            - name: demo-scripts
+              mountPath: /opt/demo
+              readOnly: true
+          env:
+            - name: {{ .Values.sm_secret_1_name | quote }}
+              value: {{ .Values.sm_secret_1_id | quote }}
+            - name: {{ .Values.sm_secret_2_name | quote }}
+              value: {{ .Values.sm_secret_2_id | quote }}
+          envFrom:
+            - configMapRef:
+                name: sm-configmap
+      volumes:
+        - name: jwt-token
+          projected:
+            sources:
+              - serviceAccountToken:
+                  path: jwt
+                  expirationSeconds: 6000
+                  audience: conjur
+        - name: podinfo
+          downwardAPI:
+            items:
+              - path: "annotations"
+                fieldRef:
+                  fieldPath: metadata.annotations
+        - name: demo-scripts
+          configMap:
+            name: demo-scripts
+            defaultMode: 0755

@@ -8,10 +8,100 @@ get_identity_token() {
       return 1
   fi
 
-  curl --silent --location "https://$1.id.cyberark.cloud/oauth2/platformtoken" \
+access_token=$(curl --silent --location "https://$1.id.cyberark.cloud/oauth2/platformtoken" \
   --header 'X-IDAP-NATIVE-CLIENT: true' \
   --header 'Content-Type: application/x-www-form-urlencoded' \
   --data-urlencode 'grant_type=client_credentials' \
   --data-urlencode "client_id=$2" \
-  --data-urlencode "client_secret=$3" | jq -r .access_token
+  --data-urlencode "client_secret=$3" | jq -r .access_token)
+
+  # Check if access_token is empty or null
+  if [ -z "$access_token" ] || [ "$access_token" == "null" ]; then
+    printf "\nERROR: Get Identity Token failed. Access token is empty or null.\n" >&2
+    exit 1
+  fi
+
+  #Return the token to the caller via stdout
+  printf '%s' "$access_token"
 }
+
+get_uuid_by_userid() {
+  # $1 isp_id, $2 identity_token, $3 username
+    if [ $# -ne 3 ]; then
+      echo "Usage: get_user_uuid_by_name isp_id identity_token username"
+      return 1
+    fi
+
+    response=$(curl --silent --location --request POST \
+      "https://$1.id.cyberark.cloud/CDirectoryService/GetUserByName" \
+      --header "authorization: Bearer $2" \
+      --header "content-type: application/json" \
+      --data "$(jq -cn --arg u "$3" '{username:$u}')"
+    )
+
+    # Check if response is empty or null
+    if [ -z "$response" ] || [ "$response" == "null" ]; then
+      printf "\nERROR: GetUserByName failed. Response is empty or null.\n" >&2
+      exit 1
+    fi
+
+    # Extract UUID (handle common field names)
+    user_uuid=$(printf '%s' "$response" | jq -r '.Uuid // empty' 2>/dev/null)
+
+    # Validate UUID
+    if [ -z "$user_uuid" ] || [ "$user_uuid" == "null" ]; then
+      printf "\nERROR: GetUserByName failed. UUID not found.\nResponse: %s\n" "$response" >&2
+      exit 1
+    fi
+
+    # Return UUID to caller via stdout
+    printf '%s' "$user_uuid"
+}
+
+set_user_lock_state() {
+  # $1 isp_id, $2 identity_token, $3 user_id, $4 lock_flag (true|false)
+  if [ $# -ne 4 ]; then
+    echo "Usage: set_cloud_lock isp_id identity_token user_email lock_flag"
+    return 1
+  fi
+
+  local isp_id="$1"
+  local identity_token="$2"
+  local user_id="$3"
+  local lock_flag="$4"
+
+  echo "Updating lock state fo $user_id to $lock_flag"
+
+  response=$(curl --silent --request POST \
+    --location "https://${isp_id}.id.cyberark.cloud/UserMgmt/SetCloudLock?user=${user_id}&lockUser=${lock_flag}" \
+    --header "authorization: Bearer ${identity_token}" \
+    --header "content-type: application/json" \
+    --data '{}'
+  )
+
+  # Get Installer users ID, then Un-"Disable" account
+  local user_uuid=$(get_uuid_by_userid  $isp_id $identity_token $user_id)
+
+  curl --request POST \
+    --location "https://${isp_id}.id.cyberark.cloud/CDirectoryService/ChangeUserState" \
+    --header 'Accept: */*' \
+    --header "authorization: Bearer ${identity_token}" \
+    --header 'Content-Type: application/json' \
+    --data "{\"ID\": \"$user_uuid\",\"state\": \"true\"}"
+
+  # Basic failure detection
+  if [ -z "$response" ]; then
+    printf "\nERROR: SetLock failed. Empty response.\n" >&2
+  fi
+
+  # Validate expected success shape: {"success":true,"Result":true,...}
+  success=$(printf '%s' "$response" | jq -r '.success // empty' 2>/dev/null)
+  result=$(printf '%s' "$response" | jq -r '.Result // empty' 2>/dev/null)
+
+  if [ "$success" != "true" ] || [ "$result" != "true" ]; then
+    printf "\nERROR: SetLock failed. success=%s result=%s errorCode=%s message=%s\nResponse: %s\n"
+    printf '%s' "$response"
+  fi
+
+}
+

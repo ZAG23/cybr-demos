@@ -1,13 +1,46 @@
+Write-Host "# Installing AWSPowerShell (if not already installed)"
 # Windows PowerShell (5.1) – from PSGallery
 # -Force → suppresses “trust repository” & overwrite prompts
 # -AllowClobber → avoids conflicts with other AWS modules
 # -Confirm:$false → disables confirmation dialogs
 # Takes ~minutes to run to completion
 # NuGet provider re-requisite
-Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
+
+$ErrorActionPreference = 'Stop'
+$ConfirmPreference     = 'None'
+
+# ------------------------------
+# Check if AWSPowerShell is already installed
+# ------------------------------
+$paths = @(
+    "$env:ProgramFiles\WindowsPowerShell\Modules\AWSPowerShell",
+    "$env:ProgramFiles\WindowsPowerShell\Modules\AWSPowerShell.NetCore",
+    "$env:ProgramFiles\WindowsPowerShell\Modules\AWS.Tools.Common"
+)
+
+if ($paths | Where-Object { Test-Path $_ } | Select-Object -First 1) {
+    Write-Host "AWS PowerShell module folder exists"
+    return
+}
+
+
+# ------------------------------
+# Ensure PSGallery is trusted (prevents prompts)
+# ------------------------------
+$psGallery = Get-PSRepository -Name 'PSGallery' -ErrorAction SilentlyContinue
+if ($psGallery -and $psGallery.InstallationPolicy -ne 'Trusted') {
+    Set-PSRepository -Name 'PSGallery' -InstallationPolicy Trusted
+}
+
+# ------------------------------
+# Install AWSPowerShell (Windows PowerShell 5.1)
+# ------------------------------
 Install-Module -Name AWSPowerShell -Scope CurrentUser -Force -AllowClobber -Confirm:$false
 
-Get-Module -ListAvailable -Name AWSPowerShell
+# ------------------------------
+# Verify
+# ------------------------------
+#Get-Module -ListAvailable -Name AWSPowerShell
 
 ## To connect to AWS
 #$ak = "ACCESS_KEY"

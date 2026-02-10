@@ -1,15 +1,39 @@
-# Chocolatey installation bootstrap
-Set-ExecutionPolicy Bypass -Scope Process -Force
-iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+Write-Host "# Installing Git (if not already installed)"
 
-# Install git
-choco install git -y
-$env:Path += ";C:\Program Files\Git\cmd"
+$ErrorActionPreference = 'Stop'
+$ConfirmPreference     = 'None'
 
-[Environment]::SetEnvironmentVariable(
-        "Path",
-        $env:Path + ";C:\Program Files\Git\cmd",
-        [EnvironmentVariableTarget]::Machine
-)
+# ------------------------------
+# Check if Git already exists
+# ------------------------------
+if (Get-Command git -ErrorAction SilentlyContinue) {
+    Write-Host "Git already installed:"
+    git --version
+    return
+}
 
+# ------------------------------
+# Install Git
+# ------------------------------
+Write-Host "Installing Git..."
+choco install git -y --no-progress
+
+# ------------------------------
+# Ensure Git is on PATH
+# ------------------------------
+$gitPath = "C:\Program Files\Git\cmd"
+
+if ($env:Path -notlike "*$gitPath*") {
+    $env:Path += ";$gitPath"
+
+    [Environment]::SetEnvironmentVariable(
+            "Path",
+            [Environment]::GetEnvironmentVariable("Path", "Machine") + ";$gitPath",
+            [EnvironmentVariableTarget]::Machine
+    )
+}
+
+# ------------------------------
+# Verify
+# ------------------------------
 git --version

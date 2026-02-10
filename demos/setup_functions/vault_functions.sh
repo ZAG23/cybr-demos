@@ -153,21 +153,7 @@ set -euo pipefail
 
  }
 
- # Can take 10 mins to be applied, no additional updates can happen will being applied
- update_ip_allowlist() {
-   # $1 isp_subdomain, $2 identity_token, $3 json_array_of_ips ('["1.0.0.4/32","2.0.0.5/24"]')
-   printf "\nUpdating Privilege Cloud IP Allowlist: $3\n"
-   ipListJson="$3"
-
-   curl --silent \
-     --request PUT \
-     --location "https://$1.privilegecloud.cyberark.cloud/api/advanced-settings/ip-allowlist" \
-     --header "Authorization: Bearer $2" \
-     --header "Content-Type: application/json" \
-     --data "{ \"customerPublicIPs\": $ipListJson }"
- }
-
-create_app() {
+ create_app() {
   # $1 isp_subdomain, $2 identity_token, $3 app_id
 
   if [ $# -ne 3 ]; then
@@ -255,3 +241,46 @@ add_app_certificate_attr_auth() {
     }"
 }
 
+# Can take 10 mins to be applied, no additional updates can happen will being applied
+ update_ip_allowlist() {
+   # $1 isp_subdomain, $2 identity_token, $3 json_array_of_ips ('["1.0.0.4/32","2.0.0.5/24"]')
+   printf "\nUpdating Privilege Cloud IP Allowlist: $3\n"
+   ipListJson="$3"
+
+   curl --silent \
+     --request PUT \
+     --location "https://$1.privilegecloud.cyberark.cloud/api/advanced-settings/ip-allowlist" \
+     --header "Authorization: Bearer $2" \
+     --header "Content-Type: application/json" \
+     --data "{ \"customerPublicIPs\": $ipListJson }"
+ }
+
+add_ip_to_privilege_cloud_allowList(){
+  # $1 isp_subdomain, $2 identity_token
+  local subdomain=$1
+  local token=$2
+
+  ip=$(curl --silent "https://checkip.amazonaws.com/")
+
+  # Fetch the current allowlist
+  response=$(curl --silent \
+    --request GET \
+    --location "https://$subdomain.privilegecloud.cyberark.cloud/api/advanced-settings/ip-allowlist" \
+    --header "Authorization: Bearer $token" \
+    --header "Accept: application/json")
+
+  # Use jq to check if the target_ip exists in the customerPublicIPs array
+  # The -e flag sets the exit status based on the result
+  if echo "$response" | jq -e ".customerPublicIPs | contains([\"$ip\"])" > /dev/null; then
+    printf "Result: $ip is already allowed.\n"
+  else
+    ip_cidr="${ip}/32"
+
+    updated_ips=$(echo "$response" | jq -c --arg ip "$ip_cidr" '.customerPublicIPs += [$ip] | .customerPublicIPs')
+
+    printf "Adding: $ip_cidr to the allowlist.\n"
+    update_ip_allowlist "$subdomain" "$token" "$updated_ips"
+    printf "\nWaiting 10 minutes for Privilege Cloud Allow List update to complete...\n"
+    sleep 600
+  fi
+}

@@ -1,0 +1,5 @@
+# mode: append-policy
+---
+- !policy
+  id: poc-workloads
+  owner: !group /Conjur_Cloud_Admins
