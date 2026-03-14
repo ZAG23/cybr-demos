@@ -24,10 +24,12 @@ log() {
 }
 
 run_as_root() {
+  # shellcheck disable=SC2024
   sudo -H bash -c "$*" >>"$log_file" 2>&1
 }
 
 run_as_ubuntu() {
+  # shellcheck disable=SC2024
   sudo -u ubuntu -H bash -c "$*" >>"$log_file" 2>&1
 }
 

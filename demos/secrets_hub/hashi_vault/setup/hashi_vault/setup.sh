@@ -1,3 +1,4 @@
+#!/bin/bash
 # Get Hashi Cert
 resolve_template "cert_request.tmpl.yaml" "cert_request.yaml"
 kubectl apply -f cert_request.yaml
@@ -22,6 +23,7 @@ cat $vault_init_file
 vault_init_addr=$(grep -oP "VAULT_ADDR='\K[^']+" "$vault_init_file")
 
 # Extract Initial Root Token
+export vault_token
 vault_token=$(grep "Initial Root Token:" "$vault_init_file" | awk '{print $NF}')
 
 # Extract Unseal Keys

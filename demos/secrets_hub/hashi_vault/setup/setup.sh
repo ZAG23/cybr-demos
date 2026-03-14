@@ -9,8 +9,8 @@ set -a
 source "$demo_path/setup/vars.env"
 set +a
 
-sm_fqdn="$SM_FQDN"
-sm_namespace="$NAMESPACE"
+export sm_fqdn="$SM_FQDN"
+export sm_namespace="$NAMESPACE"
 
 # Setup Vault
 cd "$demo_path/setup/cert_manager"

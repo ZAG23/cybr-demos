@@ -1,3 +1,4 @@
+#!/bin/bash
 # ISP Tenant Info
 # If TENANT_ID is set, use it. Otherwise, use a placeholder.
 export TENANT_ID="${TENANT_ID:-SET_TENANT_ID}"

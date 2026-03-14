@@ -14,8 +14,8 @@ set_variables() {
   printf "\nSetting local vars from Env"
   isp_id=$TENANT_ID
   isp_subdomain=$TENANT_SUBDOMAIN
-  client_id=$CLIENT_ID
-  client_secret=$CLIENT_SECRET
+  export client_id=$CLIENT_ID
+  export client_secret=$CLIENT_SECRET
   safe_name=$SAFE_NAME
 }
 platform_auth() {

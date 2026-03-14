@@ -2,6 +2,7 @@
 set -euo pipefail
 
 # Print failing command + line number
+rc=0
 trap 'rc=$?; echo "[ERROR] line $LINENO: command failed: $BASH_COMMAND (exit=$rc)" >&2; exit $rc' ERR
 
 # Require CYBR_DEMOS_PATH (or provide a default)

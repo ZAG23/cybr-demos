@@ -80,7 +80,8 @@ set_user_lock_state() {
   )
 
   # Get Installer users ID, then Un-"Disable" account
-  local user_uuid=$(get_uuid_by_userid  $isp_id $identity_token $user_id)
+  local user_uuid
+  user_uuid=$(get_uuid_by_userid "$isp_id" "$identity_token" "$user_id")
 
   curl --request POST \
     --location "https://${isp_id}.id.cyberark.cloud/CDirectoryService/ChangeUserState" \
@@ -99,8 +100,10 @@ set_user_lock_state() {
   result=$(printf '%s' "$response" | jq -r '.Result // empty' 2>/dev/null)
 
   if [ "$success" != "true" ] || [ "$result" != "true" ]; then
-    printf "\nERROR: SetLock failed. success=%s result=%s errorCode=%s message=%s\nResponse: %s\n"
-    printf '%s' "$response"
+    error_code=$(printf '%s' "$response" | jq -r '.errorCode // empty' 2>/dev/null)
+    message=$(printf '%s' "$response" | jq -r '.message // empty' 2>/dev/null)
+    printf "\nERROR: SetLock failed. success=%s result=%s errorCode=%s message=%s\nResponse: %s\n" \
+      "$success" "$result" "$error_code" "$message" "$response"
   fi
 
 }

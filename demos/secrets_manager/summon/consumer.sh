@@ -1,3 +1,4 @@
+#!/bin/bash
 echo ""
 echo "Env Variables"
 echo "SECRET1: $SECRET1"
