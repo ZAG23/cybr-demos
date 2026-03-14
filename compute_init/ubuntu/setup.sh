@@ -42,6 +42,7 @@ scripts=(
 for script in "${scripts[@]}"; do
   log "Installing: $script"
   # Redirects both stdout and stderr (2>&1) to the log file in append mode (>>)
+  # shellcheck disable=SC2024
   if sudo -i -u ubuntu bash "$CYBR_DEMOS_PATH/compute_init/ubuntu/$script" >> "$log_file" 2>&1; then
     log "SUCCESS: $script installed."
   else
