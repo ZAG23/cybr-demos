@@ -16,3 +16,4 @@ Runnable demos for [CyberArk](https://www.cyberark.com/) **Secrets Manager**, **
 | MCP / lab automation docs | [`mcp-server/README.md`](mcp-server/README.md) |
 | Ubuntu / Windows VM setup | [`compute_init/ubuntu/setup.sh`](compute_init/ubuntu/setup.sh), [`compute_init/windows/setup.ps1`](compute_init/windows/setup.ps1) |
 | One-shot clone + Ubuntu init | [`init_cybr_demos.sh`](init_cybr_demos.sh) |
+| Bash lint (local + CI on `main`) | [`.shellcheckrc`](.shellcheckrc), [`.github/workflows/shellcheck.yml`](.github/workflows/shellcheck.yml) |

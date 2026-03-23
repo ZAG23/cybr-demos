@@ -255,7 +255,7 @@ add_app_certificate_attr_auth() {
      --data "{ \"customerPublicIPs\": $ipListJson }"
  }
 
-add_ip_to_privilege_cloud_allowList(){
+add_ip_to_privilege_cloud_allowlist() {
   # $1 isp_subdomain, $2 identity_token
   local subdomain=$1
   local token=$2
