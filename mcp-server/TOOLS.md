@@ -254,7 +254,7 @@ The generated scripts depend on functions from:
 - **`demos/setup_env.sh`** - Loads all utility functions
 - **`demos/tenant_vars.sh`** - Tenant configuration
 - **`demos/utility/ubuntu/identity_functions.sh`** - Identity token functions
-- **`demos/utility/ubuntu/priviledge_functions.sh`** - Safe/account functions
+- **`demos/utility/ubuntu/privilege_functions.sh`** - Safe/account functions
 - **`demos/utility/ubuntu/conjur_functions.sh`** - Conjur sync functions
 
 ### Required Environment Variables
