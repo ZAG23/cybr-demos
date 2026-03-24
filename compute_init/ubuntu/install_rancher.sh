@@ -15,7 +15,7 @@ systemctl start rke2-server.service
 # ------------------------------
 # Wait for kubeconfig to exist
 # ------------------------------
-for i in {1..60}; do
+for _i in {1..60}; do
   [[ -f /etc/rancher/rke2/rke2.yaml ]] && break
   sleep 2
 done
@@ -57,7 +57,7 @@ systemctl restart rke2-server.service
 # ------------------------------
 export KUBECONFIG=/etc/rancher/rke2/rke2.yaml
 
-for i in {1..90}; do
+for _i in {1..90}; do
   kubectl get --raw=/readyz >/dev/null 2>&1 && break
   sleep 2
 done
