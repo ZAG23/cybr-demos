@@ -1,0 +1,12 @@
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: cyberark-issuer
+  namespace: {{NAMESPACE}}
+spec:
+  venafi:
+    zone: "{{VCERT_ZONE}}"
+    tpp:
+      url: "{{VCERT_TPP_URL}}"
+      credentialsRef:
+        name: cyberark-tpp-secret

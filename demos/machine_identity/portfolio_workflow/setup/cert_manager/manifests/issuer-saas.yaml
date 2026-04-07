@@ -1,0 +1,12 @@
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: cyberark-issuer
+  namespace: {{NAMESPACE}}
+spec:
+  venafi:
+    zone: "{{VCERT_ZONE}}"
+    cloud:
+      apiTokenSecretRef:
+        name: cyberark-api-key
+        key: apikey

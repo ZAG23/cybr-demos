@@ -1,6 +1,6 @@
 # cybr-demos
 
-Welcome to **cybr-demos** — a collection of hands-on demo scripts for [CyberArk](https://www.cyberark.com/) Secrets Manager, Secrets Hub, and Credential Providers across modern infrastructure platforms.
+Welcome to **cybr-demos** — a collection of hands-on demo scripts for [CyberArk](https://www.cyberark.com/) Machine Identity, Secrets Manager, Secrets Hub, and Credential Providers across modern infrastructure platforms.
 
 Whether you are running secrets in Kubernetes, GitHub Actions, GitLab CI, Jenkins, HashiCorp Vault, or AWS Secrets Manager, there is a demo here for you.
 
@@ -23,6 +23,7 @@ Whether you are running secrets in Kubernetes, GitHub Actions, GitLab CI, Jenkin
 - [Before You Start](#before-you-start)
 - [Configuration](#configuration)
 - [Demo Walk-Throughs](#demo-walk-throughs)
+  - [Machine Identity Portfolio](#machine-identity-portfolio-demo)
   - [Secrets Manager](#secrets-manager-demos)
   - [Secrets Hub](#secrets-hub-demos)
   - [Credential Providers](#credential-provider-demos)
@@ -72,6 +73,11 @@ cybr-demos/
     │   ├── hashi_vault/    #   HashiCorp Vault on Kubernetes
     │   ├── asm/            #   AWS Secrets Manager
     │   └── aws_cli/        #   Direct AWS CLI retrieval
+    │
+    ├── machine_identity/   # Demos: Full machine identity portfolio
+    │   └── portfolio_workflow/  # End-to-end unified demo:
+    │       ├── setup/           #   vault, sm, secrets_hub, sia, vcert, cert_manager, sai
+    │       └── demo.sh          #   ISPSS → Conjur → 3 cert options → Secrets Hub → SIA → SCA → SAI
     │
     └── credential_providers/
         ├── agent_ubuntu/       # CP agent on Linux (incl. access-control scenarios)
@@ -129,6 +135,7 @@ bash init_cybr_demos.sh
 | Demo | Requires |
 |------|----------|
 | All | CyberArk Privilege Cloud tenant + service account |
+| `portfolio_workflow` | ISPSS service account with Conjur Admin, Secrets Hub Admin, DpaAdmin roles. Optional: CyberArk Certificate Manager (VCert), K8s cluster (cert-manager), AWS account (Secrets Hub), SSH target (SIA) |
 | `k8s` | Kubernetes cluster (EKS, OCP, or Rancher/RKE2) |
 | `github.com` | GitHub repo with Actions enabled |
 | `gitlab.com` | GitLab project with CI/CD enabled |
@@ -174,6 +181,54 @@ export CYBR_DEMOS_PATH="/path/to/cybr-demos"
 ---
 
 ## Demo Walk-Throughs
+
+### Machine Identity Portfolio Demo
+
+A single end-to-end workflow demonstrating the full CyberArk machine identity portfolio. This demo walks through all nine components in sequence, showing how they share a unified identity platform.
+
+#### Portfolio Workflow (`demos/machine_identity/portfolio_workflow/`)
+
+**What it shows:** A microservice authenticates to ISPSS, retrieves secrets from Conjur Cloud, obtains TLS certificates three different ways (Conjur PKI, VCert SDK, cert-manager), verifies Secrets Hub sync, inspects JIT infrastructure and cloud access, and demonstrates AI agent identity lifecycle with AI Gateway MCP server inventory — all in one interactive walkthrough.
+
+| Step | Component | Capability |
+|------|-----------|------------|
+| 1 | ISPSS Platform Auth | OAuth2 service account token |
+| 2 | Conjur Cloud | Workload OIDC authentication |
+| 3 | Conjur Cloud | Application secret retrieval |
+| 4a | Conjur Cloud PKI | Ephemeral short-lived workload certs |
+| 4b | VCert Python SDK | Full lifecycle: request → retrieve → renew → revoke |
+| 4c | cert-manager + CyberArk Issuer | K8s-native auto-provisioning and renewal |
+| 5 | Secrets Hub | PAM → cloud-native secret sync verification |
+| 6 | Secure Infrastructure Access (SIA) | JIT SSH certificates |
+| 7 | Secure Cloud Access (SCA) | JIT cloud role elevation |
+| 8 | Secure AI Agents | Agentic identity lifecycle + AI Gateway MCP inventory |
+
+**Prerequisites:** CyberArk ISPSS tenant with service account. Certificate, Secrets Hub, SIA, and SAI stages are optional — they skip cleanly or fall back to demo mode if not configured.
+
+| Optional Feature | Requires |
+|---|---|
+| VCert SDK (live) | `VCERT_API_KEY` (SaaS) or `VCERT_TPP_*` (Self-Hosted) |
+| cert-manager (live) | Kubernetes cluster + `kubectl` + `helm` |
+| Secrets Hub | `SH_AWS_ACCOUNT_ID` + IAM role |
+| SIA | `SIA_TARGET_HOST` |
+| Secure AI Agents | `SAI_AGENT_NAME` + `Secure AI Admins` or `Secure AI Builders` role |
+
+```bash
+cd demos/machine_identity/portfolio_workflow
+
+# 1) Configure (optional: fill VCERT_*, SH_AWS_*, SIA_* vars for full demo)
+vi setup/vars.env
+
+# 2) Set up
+bash setup.sh
+
+# 3) Demo (interactive — press ENTER between steps)
+bash demo.sh
+```
+
+**Where to read:** `demo_setup.md` → `demo_validation.md`
+
+---
 
 ### Secrets Manager Demos
 

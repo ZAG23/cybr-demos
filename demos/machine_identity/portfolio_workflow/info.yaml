@@ -1,0 +1,7 @@
+Category: "Machine Identity"
+Name: "Portfolio Workflow"
+Docs: "https://docs.cyberark.com/conjur-cloud/latest/en/content/resources/_topnav/cc_home"
+DemoScript: "demo.sh"
+SetupScript: "setup.sh"
+Enabled: false
+IsSetup: false
