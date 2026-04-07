@@ -139,6 +139,9 @@ sequenceDiagram
 - **What to look for**: agent state `ACTIVE` (or `PENDING_CONNECTION` if not yet configured), MCP server entries with upstream URLs
 - If `SAI_AGENT_NAME` not set: explains the capability and registration flow
 - **Roles required**: `Secure AI Admins` or `Secure AI Builders`
+- **MCP inventory URL**: `https://{tenant-name}.cyberark.cloud/adminportal/aigw/mcp/inventory` (not yet in left sidebar — access via direct URL)
+- **MCP servers for testing**: Context7 passthrough (`https://mcp.context7.com/mcp/oauth`), Context7 no-auth (`https://mcp.context7.com/mcp`), SIA DB MCP (created via API)
+- **Tenant prep reference**: See [`setup/sai/dp_tenant_preparations.md`](setup/sai/dp_tenant_preparations.md) for role creation API, SIA MCP creation API, and known issues
 
 ### Summary Table
 - All 9 components with what was demonstrated
@@ -164,3 +167,7 @@ sequenceDiagram
 | SAI agent `PENDING_CONNECTION` | Agent not yet activated | May need gateway config before activation |
 | AIGW `0 MCP servers` | No MCP server registered | Set `SAI_AIGW_SIA_MCP_URL` and re-run setup |
 | AIGW `403 Forbidden` | Missing role | Ensure service account has `Secure AI Admins` or `Secure AI Builders` role |
+| AIGW MCP inventory not in sidebar | Early-release UI limitation | Access directly via `https://{tenant-name}.cyberark.cloud/adminportal/aigw/mcp/inventory` |
+| AIGW MCP inventory filter broken | Known issue | Browse manually; filter fix pending |
+| Context7 + OAuth not working in Claude Desktop/Web | Known issue | Use passthrough mode or no-auth endpoint for testing |
+| `Secure AI Builders` role missing | SAI installed before role existed | Reinstall SAI or create via `POST /roles/storerole` — see [`setup/sai/dp_tenant_preparations.md`](setup/sai/dp_tenant_preparations.md) |
