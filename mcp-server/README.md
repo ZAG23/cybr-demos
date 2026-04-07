@@ -1,336 +1,146 @@
 # CyberArk Demos MCP Server
 
-Model Context Protocol (MCP) server for managing the CyberArk demos project. The MCP server is now a thin adapter over the repo-native CLI in `tools/cli/`, which is the source of truth for tool behavior, templates, and command execution.
+MCP server that gives AI assistants (Claude Desktop, Zed) the ability to scaffold demos, provision CyberArk safes, create Secrets Manager workloads, and validate documentation. It is a thin adapter over `tools/cli/cybr-demos.js` -- the CLI is the source of truth for all tool behavior.
 
-## 🚀 Quick Start
-
-**New to this?** Check out [QUICKSTART.md](QUICKSTART.md) for step-by-step setup instructions!
-
-## Overview
-
-This MCP server gives AI assistants (like Claude or Zed) the ability to:
-- Create new demos with proper scaffolding
-- Generate consistent documentation templates
-- Set up standard directory structures
-- Create executable scripts with proper permissions
-- Trigger provisioning and validation through the shared CLI layer
-
-Implementation model:
-- `tools/cli/` owns command behavior and JSON output contracts
-- `tools/templates/` owns scaffold templates
-- `mcp-server/index.js` translates MCP tool calls into CLI invocations
-
-## Features
-
-### create_demo Tool
-
-Creates a new demo with standard scaffolding files:
-
-- **README.md** - Documentation template with sections for About, Prerequisites, Setup, Running, Configuration, Workflow, and Examples
-- **info.yaml** - Demo metadata (Category, Name, Docs URL, Script names, Enabled/Setup status)
-- **demo.sh** - Executable demo script with boilerplate
-- **setup.sh** - Executable setup script with boilerplate
-- **setup/configure.sh** - Executable configuration script
-
-All scripts are automatically:
-- Made executable (`chmod +x`)
-- Include shebang (`#!/bin/bash`)
-- Source common environment variables
-- Include error handling (`set -e`)
-- Have descriptive headers
-
-## Installation
+## Quickstart
 
 ### Prerequisites
 
-- Node.js 18 or higher
-- npm (comes with Node.js)
-- An MCP client: [Zed](https://zed.dev/) or [Claude Desktop](https://claude.ai/desktop)
+- Node.js 18+
+- An MCP client (Claude Desktop or Zed)
+- For provisioning tools: `CYBR_DEMOS_PATH` env var and configured `demos/tenant_vars.sh`
 
-### Steps
+### Install
 
-1. **Install Node.js** (if not already installed):
-   ```bash
-   # macOS
-   brew install node
-   
-   # Ubuntu/Debian
-   sudo apt install nodejs npm
-   
-   # Windows
-   winget install OpenJS.NodeJS
-   ```
-
-2. **Run setup script**:
-   ```bash
-   cd mcp-server
-   ./setup.sh
-   ```
-
-3. **Configure your MCP client** (see Configuration section below)
-
-4. **Restart your client** to load the MCP server
-
-## Configuration
-
-### Zed
-
-Edit `~/.config/zed/settings.json` (macOS/Linux) or `%APPDATA%\Zed\settings.json` (Windows):
-
-```json
-{
-  "context_servers": {
-    "cybr-demos": {
-      "command": "node",
-      "args": [
-        "/absolute/path/to/cybr-demos/mcp-server/index.js"
-      ]
-    }
-  }
-}
+```bash
+cd mcp-server
+./setup.sh        # checks Node version, runs npm install, prints config snippets
 ```
 
-### Claude Desktop
+### Configure your MCP client
 
-Edit the config file:
-- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+**Claude Desktop** (`~/Library/Application Support/Claude/claude_desktop_config.json`):
 
 ```json
 {
   "mcpServers": {
     "cybr-demos": {
       "command": "node",
-      "args": [
-        "/absolute/path/to/cybr-demos/mcp-server/index.js"
-      ]
+      "args": ["/absolute/path/to/cybr-demos/mcp-server/index.js"]
     }
   }
 }
 ```
 
-**Important:** Use absolute paths! Get yours with:
-```bash
-cd /path/to/cybr-demos/mcp-server && pwd
+**Zed** (`~/.config/zed/settings.json`):
+
+```json
+{
+  "context_servers": {
+    "cybr-demos": {
+      "command": "node",
+      "args": ["/absolute/path/to/cybr-demos/mcp-server/index.js"]
+    }
+  }
+}
 ```
 
-Example config files are provided:
-- [claude_desktop_config.example.json](claude_desktop_config.example.json)
-- [zed_settings.example.json](zed_settings.example.json)
+Use absolute paths. Get yours with `cd mcp-server && pwd`.
 
-## Usage
+Restart your client after adding the config.
 
-Once configured, ask your AI assistant to create demos:
+### Environment setup for provisioning tools
 
-### Basic Examples
-
-```
-Create a new secrets_manager demo called "AWS Lambda Integration"
-```
-
-```
-Create a credential_providers demo named "PSM for SSH"
-```
-
-### Advanced Examples
-
-```
-Create a secrets_hub demo called "Azure Key Vault Sync" with:
-- Display name: "Azure Key Vault Synchronization"
-- Description: "Demonstrates bidirectional sync between Secrets Hub and Azure Key Vault"
-- Category label: "Secrets Hub"
-```
-
-### Tool Parameters
-
-**Required:**
-- `category` - Demo category (see Categories section)
-- `name` - Demo name (converted to lowercase with underscores for directory)
-
-**Optional:**
-- `displayName` - Display name in README and info.yaml (defaults to name)
-- `categoryLabel` - Custom category label for info.yaml (defaults to category)
-- `description` - Description for README About section
-- `docs` - Documentation URL (defaults to CyberArk docs portal)
-- `demoScript` - Demo script filename (defaults to "demo.sh")
-- `setupScript` - Setup script filename (defaults to "setup.sh")
-
-## Categories
-
-- **`credential_providers`** - CyberArk Credential Providers (CCP, CP Agent, etc.)
-- **`secrets_manager`** - Conjur/Secrets Manager integrations (K8s, Jenkins, etc.)
-- **`secrets_hub`** - Secrets Hub integrations (AWS, Azure, HashiCorp, etc.)
-- **`utility`** - Utility demos and helper tools
-
-## Project Structure
-
-Created demos follow this structure:
-
-```
-demos/{category}/{demo_name}/
-├── README.md              # Documentation
-├── info.yaml             # Metadata
-├── demo.sh               # Demo execution script (executable)
-├── setup.sh              # Setup script (executable)
-└── setup/
-    └── configure.sh      # Configuration script (executable)
-```
-
-### Generated README Template
-
-Each README includes:
-- **About** - Description of the demo
-- **Prerequisites** - Required setup/dependencies
-- **Setup** - Installation instructions
-- **Running the Demo** - How to execute
-- **Configuration** - Configuration details
-- **Workflow** - Architecture/sequence diagrams
-- **Example** - Sample commands and output
-
-### Generated info.yaml
-
-```yaml
-Category: "Conjur Cloud"
-Name: "EKS K8s"
-Docs: "https://docs.cyberark.com/portal/latest/en/docs.htm"
-DemoScript: "demo.sh"
-SetupScript: "setup.sh"
-Enabled: false
-IsSetup: false
-```
-
-### Generated Scripts
-
-All scripts include:
-- Proper shebang (`#!/bin/bash`)
-- Error handling (`set -e`)
-- Environment variable sourcing (tenant_vars.sh)
-- Descriptive headers and comments
-- Echo statements for user feedback
-- Executable permissions
-
-## Development
-
-### Running Locally
+`provision_safe` and `provision_workload` execute live CyberArk API calls. They require:
 
 ```bash
-npm start
+# Shell profile
+export CYBR_DEMOS_PATH="/path/to/cybr-demos"
+
+# demos/tenant_vars.sh
+export TENANT_ID="abc12345"
+export TENANT_SUBDOMAIN="yourcompany"
+export CLIENT_ID="your-client-id@cyberark.cloud.12345"
+export CLIENT_SECRET="your-client-secret"
+export LAB_ID="poc"   # used for default safe name generation
 ```
 
-The server communicates via stdio using the Model Context Protocol.
+## Tools
 
-### CLI Development
+Five tools are exposed. See [TOOLS.md](TOOLS.md) for the full parameter reference.
 
-The implementation layer lives in:
+| Tool | Action | Mutating |
+|------|--------|----------|
+| `create_demo` | Scaffold a new demo directory (README, info.yaml, scripts) | Yes |
+| `create_demo_safe` | Generate vault setup scripts for a demo | Yes |
+| `provision_safe` | Create a safe in Privilege Cloud via API | Yes |
+| `provision_workload` | Create a Secrets Manager workload with API key auth | Yes |
+| `validate_readme` | Lint a markdown file against doc guidelines | No |
 
-- [tools/cli/README.md](../tools/cli/README.md)
-- [tools/cli/cybr-demos.js](../tools/cli/cybr-demos.js)
+### Typical workflow
 
-Run the CLI directly from the repo root:
-
-```bash
-node tools/cli/cybr-demos.js --help
 ```
-
-### Testing
-
-Run the CLI smoke test:
-
-```bash
-cd ../tools/cli
-npm run smoke
+1. Create a secrets_manager demo called "myapp"
+2. Provision a safe for secrets_manager/myapp with safe name "poc-myapp", add sync member true, create accounts true
+3. Provision a workload for secrets_manager/myapp with safe name "poc-myapp" and workload name "myapp-prod"
 ```
-
-### Modifying Templates
-
-Do not add template strings to `mcp-server/index.js`.
-
-Modify the real template files under:
-
-- [tools/templates/demo](../tools/templates/demo)
-- [tools/templates/safe](../tools/templates/safe)
-
-If command behavior changes, update the CLI command implementation in `tools/cli/commands/` and keep `mcp-server/index.js` as a thin adapter.
-
-## Troubleshooting
-
-### Server Not Loading
-
-1. **Check Node.js installation:**
-   ```bash
-   node -v  # Should be 18+
-   npm -v
-   ```
-
-2. **Verify config path is absolute:**
-   ```bash
-   cd mcp-server && pwd
-   # Use this full path in your config
-   ```
-
-3. **Check client logs:**
-   - Zed: `~/Library/Logs/Zed/Zed.log` (macOS)
-   - Claude: Check Console/Developer Tools
-
-### Permission Issues
-
-```bash
-chmod +x setup.sh
-chmod +x index.js
-```
-
-### Demo Already Exists
-
-The server prevents overwriting existing demos. Delete or rename the existing demo first.
 
 ## Architecture
 
 ```
-┌─────────────────┐
-│   MCP Client    │
-│ (Zed/Claude)    │
-└────────┬────────┘
-         │ stdio
-         │ MCP Protocol
-┌────────▼────────┐
-│   MCP Server    │
-│   (Node.js)     │
-└────────┬────────┘
-         │ filesystem
-┌────────▼────────┐
-│  demos/         │
-│  ├─ category1/  │
-│  └─ category2/  │
-└─────────────────┘
+MCP Client (Zed / Claude Desktop)
+       | stdio / MCP protocol
+MCP Server  (mcp-server/index.js)
+       | child_process exec
+CLI Layer   (tools/cli/cybr-demos.js)
+       | filesystem + CyberArk APIs
+demos/
 ```
 
-## Resources
+- `tools/cli/` owns command logic, templates, and JSON output contracts.
+- `tools/templates/` owns scaffold templates.
+- `mcp-server/index.js` translates MCP tool calls into CLI invocations and wraps responses in a global contract envelope.
 
-- [Model Context Protocol Spec](https://modelcontextprotocol.io/)
-- [MCP SDK Documentation](https://github.com/modelcontextprotocol/typescript-sdk)
-- [CyberArk Documentation](https://docs.cyberark.com/)
+### Response contract
 
-## License
+Every response uses a canonical envelope (request_id, contract_version, status, result, warnings, errors, meta). Sensitive values (tokens, API keys, secrets) are automatically redacted. Mutating tools support `dry_run` and `idempotency_key` parameters.
 
-MIT
+## Development
 
-## Contributing
+```bash
+npm start                         # run server on stdio
+node ../tools/cli/cybr-demos.js --help  # run CLI directly
+cd ../tools/cli && npm run smoke  # CLI smoke tests
+```
 
-To add new tools:
+Templates live in `tools/templates/demo` and `tools/templates/safe`. Do not add template strings to `index.js`.
 
-1. Add tool definition in `ListToolsRequestSchema` handler
-2. Implement tool logic in `CallToolRequestSchema` handler
-3. Update README with tool documentation
-4. Test with MCP client
+## Domain rules (summary)
 
-## Support
+These rules govern tool and script authoring in this repo:
 
-For issues or questions:
-1. Check [QUICKSTART.md](QUICKSTART.md)
-2. Review this README
-3. Check MCP client logs
-4. Verify Node.js version and paths
+- All outbound API calls must use shared functions from `demos/utility/`, not inline curl.
+- New CLI dependencies need an installer in `compute_init/`.
+- Dynamic files must use `.tmpl.*` templates resolved by `resolve_template`.
+- Each demo uses a single `setup/vars.env` for configuration.
+- YAML must never be generated via heredoc -- use template files.
+- MCP references must stay under `mcp-server/`; demo docs must not mention MCP.
 
----
+Full rules: see comments in `index.js` and the `GLOBAL_CONTRACT` / `DOMAIN_RULES` sections that were consolidated into this file.
 
-**Built with ❤️ for the CyberArk Demos Project**
+## Changelog
+
+- **1.3.0** -- Added `validate_readme` tool and documentation guidelines enforcement.
+- **1.2.0** -- Added `provision_workload` tool (API key auth, credential file generation).
+- **1.1.0** -- Added `provision_safe` and `create_demo_safe` tools.
+- **1.0.0** -- Initial release with `create_demo` tool.
+
+## Troubleshooting
+
+| Problem | Fix |
+|---------|-----|
+| Server not loading | Verify `node -v` is 18+, config path is absolute, client was restarted |
+| "Failed to get identity token" | Check `demos/tenant_vars.sh` credentials and network connectivity |
+| "Demo path does not exist" | Create the demo first with `create_demo` |
+| "Safe already exists" | Use a different name or delete the existing safe in Privilege Cloud UI |
+| "CYBR_DEMOS_PATH: unbound variable" | Export the variable in your shell profile |
