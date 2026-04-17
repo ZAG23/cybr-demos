@@ -4,25 +4,169 @@ set -euo pipefail
 get_identity_token() {
   # $1 isp_id, $2 client_id, $3 client_secret
   if [ $# -ne 3 ]; then
-      echo "Usage: get_identity_token client_id, client_secret, isp_id"
+      echo "Usage: get_identity_token <isp_id> <client_id> <client_secret>" >&2
       return 1
   fi
 
-access_token=$(curl --silent --location "https://$1.id.cyberark.cloud/oauth2/platformtoken" \
-  --header 'X-IDAP-NATIVE-CLIENT: true' \
-  --header 'Content-Type: application/x-www-form-urlencoded' \
-  --data-urlencode 'grant_type=client_credentials' \
-  --data-urlencode "client_id=$2" \
-  --data-urlencode "client_secret=$3" | jq -r .access_token)
-
-  # Check if access_token is empty or null
-  if [ -z "$access_token" ] || [ "$access_token" == "null" ]; then
-    printf "\nERROR: Get Identity Token failed. Access token is empty or null.\n" >&2
-    exit 1
+  local tmp resp http_code access_token last_http
+  local -a paths
+  local path i npath attempt_lines
+  # Build path list without ever expanding an empty `paths[@]` under `set -u` (Bash 5.x).
+  # Optional override is tried first; we always include the two standard paths (deduped).
+  if [[ -n "${CYBERARK_IDENTITY_TOKEN_PATH:-}" ]] \
+    && [[ "${CYBERARK_IDENTITY_TOKEN_PATH}" != "/oauth2/platformtoken" ]] \
+    && [[ "${CYBERARK_IDENTITY_TOKEN_PATH}" != "/api/idadmin/oauth2/platformtoken" ]]; then
+    paths=(
+      "${CYBERARK_IDENTITY_TOKEN_PATH}"
+      /oauth2/platformtoken
+      /api/idadmin/oauth2/platformtoken
+    )
+  else
+    paths=(/oauth2/platformtoken /api/idadmin/oauth2/platformtoken)
   fi
 
-  #Return the token to the caller via stdout
-  printf '%s' "$access_token"
+  tmp=$(mktemp) || {
+    printf 'ERROR: mktemp failed\n' >&2
+    return 1
+  }
+
+  npath=${#paths[@]}
+  if ((npath < 1)); then
+    printf 'ERROR: no token URL paths to try (internal bug).\n' >&2
+    exit 1
+  fi
+  attempt_lines=""
+  local -a diag_bodies
+  for ((i = 0; i < npath; i++)); do
+    path="${paths[i]}"
+    http_code=$(curl --silent --show-error --location "https://$1.id.cyberark.cloud${path}" \
+      --header 'X-IDAP-NATIVE-CLIENT: true' \
+      --header 'Content-Type: application/x-www-form-urlencoded' \
+      --header 'Accept: application/json' \
+      --data-urlencode 'grant_type=client_credentials' \
+      --data-urlencode "client_id=$2" \
+      --data-urlencode "client_secret=$3" \
+      -o "$tmp" -w '%{http_code}')
+    resp=$(cat "$tmp")
+    last_http=$http_code
+    attempt_lines+=$(printf '\n  %s -> HTTP %s, %s bytes' "${path}" "${http_code}" "${#resp}")
+    if [[ -n "${resp//[$'\t\r\n ']/}" ]]; then
+      diag_bodies+=("$resp")
+    fi
+
+    access_token=$(printf '%s' "$resp" | jq -r '
+      ((.access_token // .Result.access_token // .result.access_token) // empty)
+      | if . == null then empty else . end
+      | if type == "string" then . else empty end
+    ')
+
+    if [[ -n "$access_token" && "$access_token" != "null" && "$access_token" == *.*.* ]]; then
+      rm -f "$tmp"
+      printf '%s' "$access_token"
+      return 0
+    fi
+  done
+
+  # OAuth2 /oauth2/token/<Application ID> with client credentials in POST body (same style as platformtoken).
+  if [[ -n "${CYBERARK_OAUTH_APP_ID:-}" ]]; then
+    path="/oauth2/token/${CYBERARK_OAUTH_APP_ID}"
+    http_code=$(curl --silent --show-error --location "https://$1.id.cyberark.cloud${path}" \
+      --header 'X-IDAP-NATIVE-CLIENT: true' \
+      --header 'Content-Type: application/x-www-form-urlencoded' \
+      --header 'Accept: application/json' \
+      --data-urlencode 'grant_type=client_credentials' \
+      --data-urlencode "client_id=$2" \
+      --data-urlencode "client_secret=$3" \
+      -o "$tmp" -w '%{http_code}')
+    resp=$(cat "$tmp")
+    last_http=$http_code
+    attempt_lines+=$(printf '\n  %s (form) -> HTTP %s, %s bytes' "${path}" "${http_code}" "${#resp}")
+    if [[ -n "${resp//[$'\t\r\n ']/}" ]]; then
+      diag_bodies+=("$resp")
+    fi
+    access_token=$(printf '%s' "$resp" | jq -r '
+      ((.access_token // .Result.access_token // .result.access_token) // empty)
+      | if . == null then empty else . end
+      | if type == "string" then . else empty end
+    ')
+    if [[ -n "$access_token" && "$access_token" != "null" && "$access_token" == *.*.* ]]; then
+      rm -f "$tmp"
+      printf '%s' "$access_token"
+      return 0
+    fi
+  fi
+
+  # Fallback: Identity "client credentials" with HTTP Basic (see Identity Administration OAuth docs).
+  # Some tenants accept this when form+platformtoken is rejected or routed differently.
+  local basic_auth tp
+  local -a token_paths
+  basic_auth=$(printf '%s:%s' "$2" "$3" | base64 | tr -d '\n')
+  # Bare /oauth2/token/ often returns invalid_request / "unknown app" — Identity expects
+  # /oauth2/token/<Application ID> (Settings on the OAuth2 Client / Server app in Identity Admin).
+  token_paths=()
+  if [[ -n "${CYBERARK_OAUTH_APP_ID:-}" ]]; then
+    token_paths+=("/oauth2/token/${CYBERARK_OAUTH_APP_ID}")
+  fi
+  token_paths+=('/oauth2/token/')
+  for tp in "${token_paths[@]}"; do
+    http_code=$(curl --silent --show-error --location "https://$1.id.cyberark.cloud${tp}" \
+      --header "Authorization: Basic ${basic_auth}" \
+      --header 'Content-Type: application/x-www-form-urlencoded' \
+      --header 'Accept: application/json' \
+      --data-urlencode 'grant_type=client_credentials' \
+      -o "$tmp" -w '%{http_code}')
+    resp=$(cat "$tmp")
+    last_http=$http_code
+    attempt_lines+=$(printf '\n  %s (Basic) -> HTTP %s, %s bytes' "${tp}" "${http_code}" "${#resp}")
+    if [[ -n "${resp//[$'\t\r\n ']/}" ]]; then
+      diag_bodies+=("$resp")
+    fi
+    access_token=$(printf '%s' "$resp" | jq -r '
+      ((.access_token // .Result.access_token // .result.access_token) // empty)
+      | if . == null then empty else . end
+      | if type == "string" then . else empty end
+    ')
+    if [[ -n "$access_token" && "$access_token" != "null" && "$access_token" == *.*.* ]]; then
+      rm -f "$tmp"
+      printf '%s' "$access_token"
+      return 0
+    fi
+  done
+
+  rm -f "$tmp"
+
+  printf '\nERROR: Get Identity Token failed. No usable access_token from any configured path.\n' >&2
+  printf 'ISPSS tenant (id.cyberark.cloud label): %s  (last attempt HTTP %s)\n' "$1" "${last_http:-unknown}" >&2
+  printf 'Per-path results:%s\n' "$attempt_lines" >&2
+  nd=${#diag_bodies[@]}
+  printf 'HTTP error bodies (%d non-empty):\n' "$nd" >&2
+  if ((nd < 1)); then
+    printf '(none — every attempt returned an empty body. Wrong ISPSS id is common: confirm TENANT_ID matches your tenant URL in Identity admin.)\n' >&2
+    printf 'Hint: set CYBERARK_IDENTITY_TOKEN_PATH only if CyberArk documents a different token path.\n' >&2
+  else
+    local j
+    for ((j = 0; j < nd; j++)); do
+      printf '--- body %d (%d bytes) ---\n' "$j" "${#diag_bodies[j]}" >&2
+      printf '%s\n' "${diag_bodies[j]}" | jq . 2>/dev/null || printf '%s\n' "${diag_bodies[j]}" >&2
+    done
+  fi
+  if ((nd > 0)); then
+    local k unk
+    unk=0
+    for ((k = 0; k < nd; k++)); do
+      if printf '%s' "${diag_bodies[k]}" | jq -e '.error_description | test("unknown app")' >/dev/null 2>&1; then
+        unk=1
+        break
+      fi
+    done
+    if ((unk)); then
+      printf '\nIf CYBERARK_OAUTH_APP_ID is set but token still fails: the path segment is usually the **Application ID** from the OAuth2 app **Settings** (often a UUID), not the internal **ServiceName** (e.g. smemcp_oauth_client). Copy Application ID from Identity Admin.\n' >&2
+    fi
+  fi
+  printf '\nNEXT: run the K8s prerequisite script (DNS + token + Conjur + kubectl in one pass):\n' >&2
+  printf '  export CYBR_DEMOS_PATH=/path/to/cybr-demos\n' >&2
+  printf "  bash \"\$CYBR_DEMOS_PATH/demos/secrets_manager/k8s/check_prereqs.sh\"\n" >&2
+  exit 1
 }
 
 get_uuid_by_userid() {
